@@ -324,7 +324,7 @@ class MainPlanner(object):
             # Go through all TS state in plan and add it as TransitionSystemState message
             for ts_state in self.ltl_planner.run.line:
                 ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
+                ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner.product.graph['ts'].graph['ts_state_format'] for item in sublist]
                 # If TS state is more than 1 dimension (is a tuple)
                 if type(ts_state) is tuple:
                     ts_state_msg.states = list(ts_state)
@@ -345,7 +345,7 @@ class MainPlanner(object):
             # Go through all TS state in plan and add it as TransitionSystemState message
             for ts_state in self.ltl_planner.run.loop:
                 ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
+                ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner.product.graph['ts'].graph['ts_state_format'] for item in sublist]
                 # If TS state is more than 1 dimension (is a tuple)
                 if type(ts_state) is tuple:
                     ts_state_msg.states = list(ts_state)
