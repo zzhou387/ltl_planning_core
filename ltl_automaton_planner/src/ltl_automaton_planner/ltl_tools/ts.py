@@ -8,6 +8,11 @@ from networkx.classes.digraph import DiGraph
 
 import networkx as nx
 
+###########################################################
+# Construct a single TSModel;
+# Input is a combination of one/multiple transition systems
+###########################################################
+
 class TSModel(DiGraph):
 
     def __init__(self, state_models):

@@ -6,6 +6,13 @@ from ltl_automaton_planner.ltl_tools.product import ProdAut
 from ltl_automaton_planner.ltl_tools.discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history
 import networkx as nx
 
+###########################################################
+# Construct a general class for handling the TS and Buchi
+# automation given LTL specification; all the graph search
+# happen here
+# Input is TS, LTL tasks and other user inputs
+###########################################################
+
 class LTLPlanner(object):
     def __init__(self, ts, hard_spec, soft_spec, beta=1000, gamma=10):
         self.hard_spec = hard_spec
