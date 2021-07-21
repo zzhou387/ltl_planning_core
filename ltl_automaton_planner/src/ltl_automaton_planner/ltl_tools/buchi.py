@@ -7,6 +7,12 @@ from itertools import product as cartesian_product
 
 from networkx.classes.digraph import DiGraph
 
+###########################################################
+# Construct a buchi automation given the LTL specification
+# all the graph search happens here
+# Input is the LTL formula
+###########################################################
+
 def buchi_from_ltl(formula,Type):
     promela_string = run_ltl2ba(formula)
     symbols = find_symbols(formula)

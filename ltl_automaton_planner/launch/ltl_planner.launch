@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- Arguments -->
-  <arg name="initial_ts_state_from_agent" default="False"/>
+  <arg name="initial_ts_state_from_agent" default="True"/>
 
   <!-- Run planner node -->
   <node name="ltl_planner" pkg="ltl_automaton_planner" type="planner_node.py" output="screen">

@@ -243,8 +243,8 @@ class MainPlanner(object):
                     rospy.logerr('Can not update possible states - forbidden transition, replanning...')
 
                     # Replan
-                    # self.ltl_planner.replan_from_ts_state(state)
-                    # self.publish_plan()
+                    self.ltl_planner.replan_from_ts_state(state)
+                    self.publish_plan()
                     
                     # Publish next move
                     rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
@@ -270,8 +270,8 @@ class MainPlanner(object):
                 elif self.replan_on_unplanned_move:
                     rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
                     # Replan with state as initial
-                    # self.ltl_planner.replan_from_ts_state(state)
-                    # self.publish_plan()
+                    self.ltl_planner.replan_from_ts_state(state)
+                    self.publish_plan()
 
                     # Publish next move
                     self.plan_pub.publish(self.ltl_planner.next_move)

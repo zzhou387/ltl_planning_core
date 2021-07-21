@@ -6,6 +6,11 @@ from ltl_automaton_planner.ltl_tools.buchi import check_label_for_buchi_edge
 from networkx.classes.digraph import DiGraph
 from networkx import find_cycle, NetworkXNoCycle
 
+###########################################################
+# Construct a product model given the TS and Buchi
+# automation; all the graph search happens here
+# Input is TS, LTL tasks and other user inputs
+###########################################################
 
 class ProdAut(DiGraph):
     def __init__(self, ts, buchi, beta=1000):
