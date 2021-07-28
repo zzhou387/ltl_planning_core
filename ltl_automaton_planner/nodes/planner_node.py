@@ -13,7 +13,7 @@ import std_msgs
 from ltl_automaton_planner.ltl_tools.ts import TSModel
 from ltl_automaton_planner.ltl_tools.ltl_planner import LTLPlanner
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import networkx as nx
 from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file, handle_ts_state_msg
 
@@ -38,6 +38,7 @@ def show_automaton(automaton_graph):
 class MainPlanner(object):
     def __init__(self):
         # init parameters, automaton, etc...
+        jjjj
         self.init_params()
 
         self.build_automaton()
@@ -161,9 +162,9 @@ class MainPlanner(object):
         # initialize storage of set of possible runs in product
         self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
-        #show_automaton(self.robot_model)
-        #show_automaton(self.ltl_planner.product.graph['buchi'])
-        #show_automaton(self.ltl_planner.product)
+        # show_automaton(self.robot_model)
+        # show_automaton(self.ltl_planner.product.graph['buchi'])
+        # show_automaton(self.ltl_planner.product)
 
 
     def setup_pub_sub(self):
@@ -184,6 +185,9 @@ class MainPlanner(object):
 
         # Initialize task replanning service
         self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
+
+        # Subscribe to the replanning status
+        self.replan_sub = rospy.Subscriber('replanning_status', std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
 
 
     def setup_plugins(self):
@@ -219,6 +223,21 @@ class MainPlanner(object):
         return rsp
 
 
+    def ltl_replan_callback(self, msg):
+        replan_status = msg.data
+        rospy.logerr('LTL planner: replanning debug')
+        if(replan_status == 0):
+            rospy.logerr('LTL planner: replanning ERROR')
+
+        if(replan_status == 2):
+            rospy.logwarn('LTL planner: received replanning Level 2')
+
+        if(replan_status == 3):
+            rospy.logwarn('LTL planner: received replanning Level 3')
+
+
+
+
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
         state = handle_ts_state_msg(msg.ts_state)
@@ -243,8 +262,8 @@ class MainPlanner(object):
                     rospy.logerr('Can not update possible states - forbidden transition, replanning...')
 
                     # Replan
-                    self.ltl_planner.replan_from_ts_state(state)
-                    self.publish_plan()
+                    # self.ltl_planner.replan_from_ts_state(state)
+                    # self.publish_plan()
                     
                     # Publish next move
                     rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
@@ -270,8 +289,8 @@ class MainPlanner(object):
                 elif self.replan_on_unplanned_move:
                     rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
                     # Replan with state as initial
-                    self.ltl_planner.replan_from_ts_state(state)
-                    self.publish_plan()
+                    # self.ltl_planner.replan_from_ts_state(state)
+                    # self.publish_plan()
 
                     # Publish next move
                     self.plan_pub.publish(self.ltl_planner.next_move)
