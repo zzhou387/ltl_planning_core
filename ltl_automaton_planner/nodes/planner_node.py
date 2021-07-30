@@ -38,7 +38,6 @@ def show_automaton(automaton_graph):
 class MainPlanner(object):
     def __init__(self):
         # init parameters, automaton, etc...
-        jjjj
         self.init_params()
 
         self.build_automaton()
@@ -162,9 +161,9 @@ class MainPlanner(object):
         # initialize storage of set of possible runs in product
         self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
-        # show_automaton(self.robot_model)
-        # show_automaton(self.ltl_planner.product.graph['buchi'])
-        # show_automaton(self.ltl_planner.product)
+        show_automaton(self.robot_model)
+        show_automaton(self.ltl_planner.product.graph['buchi'])
+        show_automaton(self.ltl_planner.product)
 
 
     def setup_pub_sub(self):
@@ -187,7 +186,7 @@ class MainPlanner(object):
         self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
 
         # Subscribe to the replanning status
-        self.replan_sub = rospy.Subscriber('replanning_status', std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
+        self.replan_sub = rospy.Subscriber('replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
 
 
     def setup_plugins(self):
@@ -231,6 +230,9 @@ class MainPlanner(object):
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2')
+            # Replan
+            self.ltl_planner.replan_from_ts_state(state)
+            self.publish_plan()
 
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3')

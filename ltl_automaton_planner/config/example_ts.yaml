@@ -7,7 +7,8 @@
 #   2d_point_region (2D point [x, y] without orientation)
 #   turtlebot_load
 
-state_dim: ["2d_pose_region", "turtlebot_load"]
+#state_dim: ["2d_pose_region", "turtlebot_load"]
+state_dim: ["2d_pose_region"]
 state_models:
     2d_pose_region:
         ts_type: "2d_pose_region"
@@ -21,7 +22,7 @@ state_models:
                     hysteresis: 0.05
                 connected_to:
                     r2: "goto_r2"
-                    r3: "goto_r3"
+#                    r3: "goto_r3"
             r2:
                 attr:
                     type: "station"
@@ -32,24 +33,24 @@ state_models:
                     angle_hysteresis: 0.1
                 connected_to:
                     r1: "goto_r1"
-            r3:
-                attr:
-                    type: "square"
-                    pose: [[2,1], [0]]
-                    length: 1
-                    hysteresis: 0.05
-                connected_to:
-                    r1: "goto_r1"
-    turtlebot_load:
-        ts_type: "turtlebot_load"
-        initial: "unloaded"
-        nodes:
-            unloaded:
-                connected_to:
-                    loaded: "pick"
-            loaded:
-                connected_to:
-                    unloaded: "drop"
+#            r3:
+#                attr:
+#                    type: "square"
+#                    pose: [[2,1], [0]]
+#                    length: 1
+#                    hysteresis: 0.05
+#                connected_to:
+#                    r1: "goto_r1"
+#    turtlebot_load:
+#        ts_type: "turtlebot_load"
+#        initial: "unloaded"
+#        nodes:
+#            unloaded:
+#                connected_to:
+#                    loaded: "pick"
+#            loaded:
+#                connected_to:
+#                    unloaded: "drop"
 
 actions:
     goto_r1:
@@ -66,20 +67,20 @@ actions:
         attr:
             region: r2
             pose: [[1,1,0], [0,0,0,1]]
-    goto_r3:
-        type: "move"
-        weight: 10
-        guard: "1"
-        attr:
-            region: r3
-            pose: [[2,1,0], [0,0,0,1]]
-    pick:
-        type: "turtlebot_pick"
-        guard: "r2"
-        weight: 10
-    drop:
-        type: "turtlebot_drop"
-        guard: "r2"
-        weight: 10
+#    goto_r3:
+#        type: "move"
+#        weight: 10
+#        guard: "1"
+#        attr:
+#            region: r3
+#            pose: [[2,1,0], [0,0,0,1]]
+#    pick:
+#        type: "turtlebot_pick"
+#        guard: "r2"
+#        weight: 10
+#    drop:
+#        type: "turtlebot_drop"
+#        guard: "r2"
+#        weight: 10
              
 
