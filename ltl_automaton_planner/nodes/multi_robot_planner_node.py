@@ -11,7 +11,8 @@ from copy import deepcopy
 import std_msgs
 
 from ltl_automaton_planner.ltl_tools.ts import TSModel
-from ltl_automaton_planner.ltl_tools.ltl_planner import LTLPlanner
+from ltl_automaton_planner.ltl_tools.team import TeamModel
+from ltl_automaton_planner.ltl_tools.ltl_planner_multi_robot import LTLPlanner_MultiRobot
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -35,7 +36,7 @@ def show_automaton(automaton_graph):
     plt.show()
     return
 
-class MainPlanner(object):
+class MultiRobot_Planner(object):
     def __init__(self):
         # init parameters, automaton, etc...
         self.init_params()
@@ -44,17 +45,16 @@ class MainPlanner(object):
 
         self.setup_pub_sub()
 
-        self.setup_plugins()
-
         # Output plan and first command of plan
         self.publish_possible_states()
         self.publish_plan()
         self.plan_pub.publish(self.ltl_planner.next_move)
-       
+
 
     def init_params(self):
         #Get parameters from parameter server
-        self.agent_name = rospy.get_param('agent_name', "agent")
+        self.agent_name_1 = rospy.get_param('agent_name_1', "agent_1")
+        self.agent_name_2 = rospy.get_param('agent_name_2', "agent_2")
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
 
@@ -94,41 +94,8 @@ class MainPlanner(object):
         self.replan_on_unplanned_move = True
         self.check_timestamp = True
         self.prev_received_timestamp = rospy.Time()
-        self.dynparam_srv = DRServer(LTLAutomatonDPConfig, self.dynparam_callback)
-    
-    #---------------------------------------------
-    # Load plugins from a given plugin dictionary
-    #---------------------------------------------
-    def load_and_init_plugins(self, plugin_dict):
-    # ----
-    # Format for plugin param is:
-    #   plugin/<plugin-name>:
-    #       path: <package-path>
-    #       args: <additional-argument-dictionary>
-    # ----
-        self.plugins = {}
-        for plugin in plugin_dict:
-            # Import plugin module
-            try:
-                # Import module to a plugin dict
-                plugin_module = importlib.import_module(plugin_dict[plugin]["path"])
-            except ImportError:
-                # Error log message
-                rospy.logerr("LTL planner: Import error on loading plugin %s at %s" % (str(plugin), plugin_dict[plugin]["path"]))
-                # Go to next plugin
-                break
 
-            # Get plugin class from imported module
-            plugin_class = getattr(plugin_module, str(plugin))
-            # Create plugin object from class using argument dictionary from parameters
-            self.plugins.update({plugin: plugin_class(self.ltl_planner, plugin_dict[plugin]['args'])})
-            rospy.loginfo("LTL planner: using plugin %s" % str(plugin))
 
-        # Init plugins
-        for plugin in self.plugins:
-            self.plugins[plugin].init()
-
-     
     def init_ts_state_from_agent(self, msg=TransitionSystemStateStamped):
         initial_state_ts_dict_ = None
 
@@ -137,12 +104,12 @@ class MainPlanner(object):
             # Create dictionnary with paired dimension_name/state_value
             initial_state_ts_dict_ = dict()
             for i in range(len(msg.ts_state.states)):
-                initial_state_ts_dict_.update({msg.ts_state.state_dimension_names[i] : msg.ts_state.states[i]}) 
+                initial_state_ts_dict_.update({msg.ts_state.state_dimension_names[i] : msg.ts_state.states[i]})
 
-        # Else message is malformed, raise error
+                # Else message is malformed, raise error
         else:
             rospy.logerr("LTL planner: received initial states don't match TS state models: "+str(len(msg.ts_state.states))+" initial states and "+str(len(msg.ts_state.state_dimension_names))+" state models")
-        
+
         # Return initial state dictionnary
         return initial_state_ts_dict_
 
@@ -150,11 +117,11 @@ class MainPlanner(object):
     def build_automaton(self):
         # Import state models from TS
         state_models = state_models_from_ts(self.transition_system, self.initial_state_ts_dict)
-     
+
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
-        self.ltl_planner = LTLPlanner(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
-        self.ltl_planner.optimal()
+        self.ltl_planner_multi_robot = LTLPlanner_MultiRobot(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
+        self.ltl_planner_multi_robot.task_allocate()
         # Get first value from set
         self.ltl_planner.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
 
@@ -170,14 +137,11 @@ class MainPlanner(object):
         # Prefix plan publisher
         self.prefix_plan_pub = rospy.Publisher('prefix_plan', LTLPlan, latch=True, queue_size = 1)
 
-        # Suffix plan publisher
-        self.suffix_plan_pub = rospy.Publisher('suffix_plan', LTLPlan, latch=True, queue_size = 1)
-
         # Possible states publisher
         self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemStateStamped, self.ltl_state_callback, queue_size=1) 
+        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemStateStamped, self.ltl_state_callback, queue_size=1)
 
         # Initialize publisher to send plan commands
         self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
@@ -187,23 +151,6 @@ class MainPlanner(object):
 
         # Subscribe to the replanning status
         self.replan_sub = rospy.Subscriber('replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
-
-
-    def setup_plugins(self):
-        # Get plugin dictionnary from parameters
-        plugin_dict = rospy.get_param('~plugin', {})
-        # If plugins are specified, try to load them
-        self.load_and_init_plugins(plugin_dict)
-
-        # Setup plugin subscribers and publisers
-        for plugin in self.plugins:
-            self.plugins[plugin].set_sub_and_pub()
-
-
-    def dynparam_callback(self, config, level):
-        self.replan_on_unplanned_move = config['replan_on_unplanned_move']
-        self.check_timestamp = config['check_timestamp']
-        return config
 
 
     def task_replanning_callback(self, task_planning_req):
@@ -243,7 +190,7 @@ class MainPlanner(object):
     def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
         # Extract TS state from message
         state = handle_ts_state_msg(msg.ts_state)
-        
+
         #-------------------------
         # Check if state is in TS
         #-------------------------
@@ -266,7 +213,7 @@ class MainPlanner(object):
                     # Replan
                     # self.ltl_planner.replan_from_ts_state(state)
                     # self.publish_plan()
-                    
+
                     # Publish next move
                     rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
                     self.plan_pub.publish(self.ltl_planner.next_move)
@@ -287,7 +234,7 @@ class MainPlanner(object):
                     rospy.loginfo('LTL planner: Publishing next move')
                     self.plan_pub.publish(self.ltl_planner.next_move)
 
-                # If state is not the next one in plan replan 
+                # If state is not the next one in plan replan
                 elif self.replan_on_unplanned_move:
                     rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
                     # Replan with state as initial
@@ -408,9 +355,9 @@ class MainPlanner(object):
 #             Main
 #==============================
 if __name__ == '__main__':
-    rospy.init_node('ltl_planner', anonymous=False)
+    rospy.init_node('ltl_planner_multi_robot', anonymous=False)
     try:
-        ltl_planner_node = MainPlanner()
+        multi_robot_ltl_planner_node = MultiRobot_Planner()
         rospy.spin()
     except ValueError as e:
         rospy.logerr("LTL Planner: "+str(e))

@@ -11,7 +11,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 def show_automaton(automaton_graph):
-    pos=nx.spectral_layout(automaton_graph)
+    pos=nx.circular_layout(automaton_graph)
     nx.draw(automaton_graph, pos)
     nx.draw_networkx_labels(automaton_graph, pos)
     edge_labels = nx.get_edge_attributes(automaton_graph, 'action')
@@ -52,6 +52,7 @@ class MainTest(object):
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model = TSModel(state_models)
 
+        # new wrapper starts from here
         self.buchi = mission_to_buchi(self.hard_task, self.soft_task)
         self.decompose_set = get_decomposition_set(self.buchi)
 
