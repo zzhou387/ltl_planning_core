@@ -44,7 +44,7 @@ class MainTest(object):
         # Transition system
         #-------------------
         # Get TS from param
-        transition_system_textfile = rospy.get_param('transition_system_textfile')
+        transition_system_textfile = rospy.get_param('transition_system_mobile_textfile')
         self.initial_state_ts_dict = None
         self.transition_system = import_ts_from_file(transition_system_textfile)
         state_models = state_models_from_ts(self.transition_system, self.initial_state_ts_dict)

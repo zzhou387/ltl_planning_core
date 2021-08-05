@@ -33,7 +33,7 @@ class LTLPlanner_MultiRobot(object):
             product = ProdAut(ts_0, self.buchi)
             product.graph['ts'].build_full()
             product.build_full()
-            self.pro_list += product
+            self.pro_list.append(product)
 
     def task_allocate(self, style='static'):
         rospy.loginfo("LTL Planner: --- Planning in progress ("+style+") ---")
@@ -41,12 +41,12 @@ class LTLPlanner_MultiRobot(object):
         rospy.loginfo("LTL Planner: Soft task is: "+str(self.soft_spec))
 
         if style == 'static':
-            self.team = TeamModel(self.pro_list)
+            self.team = TeamModel(self.pro_list, self.decomposition_set)
             self.team.build_team()
-            self.plans = compute_team_plans(self.team)
+            # self.plans = compute_team_plans(self.team)
 
-        if self.plans == None:
-            rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
-            return False
+        # if self.plans == None:
+        #     rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
+        #     return False
         return True
 

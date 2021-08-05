@@ -50,7 +50,7 @@ class TeamModel(DiGraph):
             if self.nodes[node]['rname'] == len(self.graph['pro_list'])-1:
                 continue
 
-            if self.nodes[node]['buchi'] in self.graph['decompose_set']:
+            if self.nodes[node]['buchi'] in self.graph['decomposition_set']:
                 next_rname = self.nodes[node]['rname'] + 1
                 next_ts_state = None
                 for next_team_init in self.graph['initials']:

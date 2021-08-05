@@ -21,6 +21,7 @@ from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, 
 # Import LTL automaton message definitions
 from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
 from ltl_automaton_msgs.srv import TaskPlanning, TaskPlanningResponse
+from networkx.drawing.nx_agraph import to_agraph
 
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
 from dynamic_reconfigure.server import Server as DRServer
@@ -34,6 +35,11 @@ def show_automaton(automaton_graph):
     edge_labels = nx.get_edge_attributes(automaton_graph, 'action')
     nx.draw_networkx_edge_labels(automaton_graph, pos, edge_labels = edge_labels)
     plt.show()
+    # automaton_graph.graph['edge'] = {'arrowsize': '0.6', 'splines': 'curved'}
+    # A = to_agraph(automaton_graph)
+    # A.layout('dot')
+    # A.draw('team.png')
+    # plt.show()
     return
 
 class MultiRobot_Planner(object):
@@ -46,15 +52,16 @@ class MultiRobot_Planner(object):
         self.setup_pub_sub()
 
         # Output plan and first command of plan
-        self.publish_possible_states()
-        self.publish_plan()
-        self.plan_pub.publish(self.ltl_planner.next_move)
+        # self.publish_possible_states()
+        # self.publish_plan()
+        # self.plan_pub.publish(self.ltl_planner.next_move)
 
 
     def init_params(self):
         #Get parameters from parameter server
-        self.agent_name_1 = rospy.get_param('agent_name_1', "agent_1")
-        self.agent_name_2 = rospy.get_param('agent_name_2', "agent_2")
+        self.agent_name_mobile_1 = rospy.get_param('agent_name_mobile_1', "agent_1")
+        self.agent_name_mobile_2 = rospy.get_param('agent_name_mobile_2', "agent_2")
+        self.agent_name_dog_1 = rospy.get_param('agent_name_dog_1', "dog_1")
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
 
@@ -73,21 +80,24 @@ class MultiRobot_Planner(object):
         # Transition system
         #-------------------
         # Get TS from param
-        transition_system_textfile = rospy.get_param('transition_system_textfile')
-        self.transition_system = import_ts_from_file(transition_system_textfile)
+        transition_system_mobile_textfile = rospy.get_param('transition_system_mobile_textfile')
+        self.transition_system_mobile = import_ts_from_file(transition_system_mobile_textfile)
+
+        transition_system_quadruped_textfile = rospy.get_param('transition_system_quadruped_textfile')
+        self.transition_system_quadruped = import_ts_from_file(transition_system_quadruped_textfile)
         #print(self.transition_system)
 
         # Parameter if initial TS is set from agent callback or from TS config file
         self.initial_ts_state_from_agent = rospy.get_param('~initial_ts_state_from_agent', False)
 
         #If initial TS states is from agent, wait from agent state callback
-        if self.initial_ts_state_from_agent:
-            self.initial_state_ts_dict = None
-            rospy.loginfo("LTL planner: waiting for initial TS state from agent to initialize")
-            while not self.initial_state_ts_dict:
-                self.initial_state_ts_dict = self.init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemStateStamped))
-        else:
-            self.initial_state_ts_dict = None
+        # if self.initial_ts_state_from_agent:
+        #     self.initial_state_ts_dict = None
+        #     rospy.loginfo("LTL planner: waiting for initial TS state from agent to initialize")
+        #     while not self.initial_state_ts_dict:
+        #         self.initial_state_ts_dict = self.init_ts_state_from_agent(rospy.wait_for_message("ts_state", TransitionSystemStateStamped))
+        # else:
+        self.initial_state_ts_dict = None
 
 
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
@@ -116,21 +126,24 @@ class MultiRobot_Planner(object):
 
     def build_automaton(self):
         # Import state models from TS
-        state_models = state_models_from_ts(self.transition_system, self.initial_state_ts_dict)
+        state_models_mobile = state_models_from_ts(self.transition_system_mobile, self.initial_state_ts_dict)
+        state_models_quadruped = state_models_from_ts(self.transition_system_quadruped, self.initial_state_ts_dict)
 
         # Here we take the product of each element of state_models to define the full TS
-        self.robot_model = TSModel(state_models)
-        self.ltl_planner_multi_robot = LTLPlanner_MultiRobot(self.robot_model, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
+        self.ts_list = [TSModel(state_models_mobile), TSModel(state_models_quadruped)]
+
+        self.ltl_planner_multi_robot = LTLPlanner_MultiRobot(self.ts_list, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner_multi_robot.task_allocate()
         # Get first value from set
-        self.ltl_planner.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
+        # self.ltl_planner.curr_ts_state = list(self.ltl_planner.product.graph['ts'].graph['initial'])[0]
 
         # initialize storage of set of possible runs in product
-        self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
+        # self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
         # show_automaton(self.robot_model)
         # show_automaton(self.ltl_planner.product.graph['buchi'])
         # show_automaton(self.ltl_planner.product)
+        show_automaton(self.ltl_planner_multi_robot.team)
 
 
     def setup_pub_sub(self):
