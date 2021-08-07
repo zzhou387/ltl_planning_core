@@ -73,7 +73,7 @@ class MainPlanner(object):
         # Transition system
         #-------------------
         # Get TS from param
-        transition_system_mobile_textfile = rospy.get_param('transition_system_mobile_textfile')
+        transition_system_mobile_textfile = rospy.get_param('transition_system_textfile')
         self.transition_system = import_ts_from_file(transition_system_mobile_textfile)
         #print(self.transition_system)
 

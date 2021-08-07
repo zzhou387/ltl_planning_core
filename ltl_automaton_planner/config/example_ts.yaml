@@ -62,7 +62,7 @@ actions:
             pose: [[0,0,0], [0,0,0,1]]
     goto_r2:
         type: "move"
-        weight: 10
+        weight: 5
         guard: "1"
         attr:
             region: r2

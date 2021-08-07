@@ -86,15 +86,15 @@ state_models:
                 connected_to:
                     unloaded: "drop" 
                     
-     battery:
-         ts_type: "battery"
-         initial: "high"
-         nodes:
-             high:
-                 connected_to: {}
-             low:
-                 connected_to:
-                     high: "charge"
+    battery:
+        ts_type: "battery"
+        initial: "high"
+        nodes:
+            high:
+                connected_to: {}
+            low:
+                connected_to:
+                    high: "charge"
 
 actions:
     goto_r1:

@@ -11,13 +11,13 @@
 
 <!--   <param name="agent_name" type="string" value="$(arg agent_name)" /> -->
   <!-- hard and soft task parameters -->
-  <rosparam command="load" file="$(find ltl_automaton_planner)/config/test_ltl_formula.yaml" />
+  <rosparam command="load" file="$(find ltl_automaton_planner)/config/example_ltl_formula.yaml" />
 
   <!-- Transition system for mobile robot-->
-  <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/test_ts.yaml" />
+  <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts.yaml" />
 
   <!-- Transition system for quadruped-->
-  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/test_ts_dog.yaml" />
+  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_dog.yaml" />
 
   <!-- Run planner node -->
 <!--  <node name="ltl_planner" pkg="ltl_automaton_planner" type="planner_node.py" output="screen">-->
@@ -25,36 +25,34 @@
 <!--  </node>-->
 
   <!-- Run the gazebo world-->
-<!--  <include file="$(find unitree_bringup)/launch/gazebo.launch" />-->
-<!--    <arg name="world_name" value="mrdc"/>-->
-<!--    <arg name="world_format" value="model"/>-->
-<!--  </include>-->
+<!--  <include file="$(find unitree_bringup)/launch/gazebo.launch" > -->
+<!--    <arg name="world_name" value="mrdc"/> -->
+<!--    <arg name="world_format" value="model"/> -->
+<!--  </include> -->
 
-<!--  &lt;!&ndash; Spawn robots&ndash;&gt;-->
-<!--  <include file="$(find unitree_bringup)/launch/spawn_one_a1.launch">-->
-<!--    <arg name="robot_name" value="a1" />-->
-<!--    <arg name="pose_x" value="0.0" />-->
-<!--    <arg name="pose_y" value="0" />-->
-<!--    <arg name="debug" value="$(arg debug)"/>-->
-<!--  </include>-->
+<!--  <include file="$(find unitree_bringup)/launch/spawn_one_a1.launch"> -->
+<!--    <arg name="robot_name" value="a1" /> -->
+<!--    <arg name="pose_x" value="0.0" /> -->
+<!--    <arg name="pose_y" value="0" /> -->
+<!--  </include> -->
 
-<!--  <include file="$(find bringup_sim)/launch/spawn_one_openshelf7.launch">-->
-<!--    <arg name="robot_name" value="openshelf_0" />-->
-<!--    <arg name="pose_x" value="1.0" />-->
-<!--    <arg name="pose_y" value="0" />-->
-<!--  </include>-->
+<!--  <include file="$(find bringup_sim)/launch/spawn_one_openshelf7.launch"> -->
+<!--    <arg name="robot_name" value="openshelf_0" /> -->
+<!--    <arg name="pose_x" value="1.0" /> -->
+<!--    <arg name="pose_y" value="0" /> -->
+<!--  </include> -->
 
-<!--  <include file="$(find bringup_sim)/launch/spawn_one_openshelf7.launch">-->
-<!--    <arg name="robot_name" value="openshelf_1" />-->
-<!--    <arg name="pose_x" value="2.0" />-->
-<!--    <arg name="pose_y" value="0" />-->
-<!--  </include>-->
+<!--  <include file="$(find bringup_sim)/launch/spawn_one_openshelf7.launch"> -->
+<!--    <arg name="robot_name" value="openshelf_1" /> -->
+<!--    <arg name="pose_x" value="2.0" /> -->
+<!--    <arg name="pose_y" value="0" /> -->
+<!--  </include> -->
 
-<!--  &lt;!&ndash; Run &ndash;&gt;-->
-<!--  &lt;!&ndash; Run quadruped navigation &ndash;&gt;-->
-<!--  <include file="$(find ltl_automation_a1)/launch/a1_monitor_bt.launch">-->
-<!--    <arg name="agent_name" value="$(arg agent_name)"/>-->
-<!--  </include>-->
+<!--  &lt;!&ndash; Run &ndash;&gt;--> -->
+<!--  &lt;!&ndash; Run quadruped navigation &ndash;&gt;--> -->
+<!--  <include file="$(find ltl_automation_a1)/launch/a1_monitor_bt.launch">--> -->
+<!--    <arg name="agent_name" value="$(arg agent_name)"/>--> -->
+<!--  </include>--> -->
 
 
 </launch>
