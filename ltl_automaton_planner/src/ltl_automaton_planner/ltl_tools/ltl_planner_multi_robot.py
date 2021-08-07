@@ -43,10 +43,10 @@ class LTLPlanner_MultiRobot(object):
         if style == 'static':
             self.team = TeamModel(self.pro_list, self.decomposition_set)
             self.team.build_team()
-            # self.plans = compute_team_plans(self.team)
+            self.plans = compute_team_plans(self.team)
 
-        # if self.plans == None:
-        #     rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
-        #     return False
+        if self.plans == None:
+            rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
+            return False
         return True
 

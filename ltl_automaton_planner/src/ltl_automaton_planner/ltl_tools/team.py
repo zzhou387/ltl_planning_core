@@ -43,7 +43,7 @@ class TeamModel(DiGraph):
 
                     cost = prod.graph['ts'][ts_node][ts_node_suc]['weight']
                     action = prod.graph['ts'][ts_node][ts_node_suc]['action']
-                    self.add_edge(team_node, team_node_suc, transition_cost=cost, action=action)
+                    self.add_edge(team_node, team_node_suc, transition_cost=cost, action=action, weight=cost)
 
         # Add switch transition between different robots
         for node in self.nodes:
@@ -68,11 +68,51 @@ class TeamModel(DiGraph):
                 guard = self.graph['pro_list'][self.nodes[node]['rname']].graph['buchi'].edges[next_buchi_state, next_buchi_state]['guard']
 
                 if guard.check(label):
-                    self.add_edge(node, next_node, transition_cost=0, action='switch_transition')
+                    self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
 
     def projection(self, team_node):
         rname = self.nodes[team_node]['rname']
         ts_node = self.nodes[team_node]['ts']
         buchi_node = self.nodes[team_node]['buchi']
+        return rname, ts_node, buchi_node
 
 
+class Team_Run(object):
+    def __init__(self, team, plan, plan_cost):
+        self.team_plan = plan
+        self.totalcost = plan_cost
+        self.plan_output(team)
+
+    def plan_output(self, team):
+        self.action_sequence = {}
+        self.state_sequence = {}
+        rname_init = 0
+        self.plan_local = list()
+        for node in self.team_plan:
+            # This is allowable since the order of robot is fixed according to switch transition
+            rname, ts_node, buchi_node = team.projection(node)
+            if rname > rname_init:
+                self.state_sequence[rname-1] = self.plan_local
+                self.plan_local = list()
+                rname_init = rname
+            self.plan_local.append(node)
+        self.state_sequence[rname] = self.plan_local
+
+        for r_idx, state_seq in self.state_sequence.items():
+            team_edges = zip(state_seq[0:-1], state_seq[1:])
+            action_sequence_local = list()
+            for team_edge in team_edges:
+                action_sequence_local.append(team[team_edge[0]][team_edge[1]]['action'])
+            self.action_sequence[r_idx] = action_sequence_local
+
+        for r_idx, act_seq in self.action_sequence.items():
+            if len(act_seq) == 0:
+                rospy.loginfo('LTL Planner: Robot-%d plan: Empty; no task assigned' %r_idx)
+            else:
+                rospy.loginfo('LTL Planner: Robot-%d plan: ' %r_idx + str(act_seq))
+
+        # if self.ts_plan_sorted:
+        #     self.ts_edges_sorted = list()
+        #     for idx, ts_nodes in enumerate(self.ts_plan_sorted):
+        #         self.ts_edges = zip(ts_nodes[0:-1], ts_nodes[1:])
+        #         self.ts_edges_sorted.append(self.ts_edges)
