@@ -11,24 +11,29 @@
 
 <!--   <param name="agent_name" type="string" value="$(arg agent_name)" /> -->
   <!-- hard and soft task parameters -->
-  <rosparam command="load" file="$(find ltl_automaton_planner)/config/example_ltl_formula.yaml" />
+  <rosparam command="load" file="$(find ltl_automation_a1)/config/example_ltl_formula.yaml" />
 
   <!-- Transition system for mobile robot-->
-  <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts.yaml" />
+  <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automation_a1)/config/openshelf_ts.yaml" />
 
   <!-- Transition system for quadruped-->
-  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_dog.yaml" />
+  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automation_a1)/config/a1_ts.yaml" />
 
   <!-- Run planner node -->
-<!--  <node name="ltl_planner" pkg="ltl_automaton_planner" type="planner_node.py" output="screen">-->
-<!--    <param name="initial_ts_state_from_agent" type="bool" value="$(arg initial_ts_state_from_agent)" />-->
-<!--  </node>-->
+  <node name="ltl_planner" pkg="ltl_automaton_planner" type="multi_robot_planner_node.py" output="screen">-->
+    <param name="initial_ts_state_from_agent" type="bool" value="$(arg initial_ts_state_from_agent)" />-->
+  </node>
 
   <!-- Run the gazebo world-->
-<!--  <include file="$(find unitree_bringup)/launch/gazebo.launch" > -->
-<!--    <arg name="world_name" value="mrdc"/> -->
-<!--    <arg name="world_format" value="model"/> -->
-<!--  </include> -->
+  <include file="$(find unitree_bringup)/launch/gazebo.launch">
+    <arg name="world_name" value="mrdc"/>
+    <arg name="world_format" value="model"/>
+  </include>
+
+   <include file="$(find ltl_automation_a1)/launch/a1_monitor_bt.launch">
+     <arg name="agent_name" value="a1_gazebo" />
+   </include>
+
 
 <!--  <include file="$(find unitree_bringup)/launch/spawn_one_a1.launch"> -->
 <!--    <arg name="robot_name" value="a1" /> -->
