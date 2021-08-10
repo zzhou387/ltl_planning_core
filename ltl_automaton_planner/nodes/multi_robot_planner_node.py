@@ -53,14 +53,14 @@ class MultiRobot_Planner(object):
 
         # Output plan and first command of plan
         # self.publish_possible_states()
-        # self.publish_plan()
+        self.publish_plan_initial()
         # self.plan_pub.publish(self.ltl_planner.next_move)
 
 
     def init_params(self):
         #Get parameters from parameter server
         self.agent_name_mobile_1 = rospy.get_param('agent_name_mobile_1', "agent_1")
-        self.agent_name_mobile_2 = rospy.get_param('agent_name_mobile_2', "agent_2")
+        # self.agent_name_mobile_2 = rospy.get_param('agent_name_mobile_2', "agent_2")
         self.agent_name_dog_1 = rospy.get_param('agent_name_dog_1', "dog_1")
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
@@ -143,43 +143,44 @@ class MultiRobot_Planner(object):
         # show_automaton(self.robot_model)
         # show_automaton(self.ltl_planner.product.graph['buchi'])
         # show_automaton(self.ltl_planner.product)
-        show_automaton(self.ltl_planner_multi_robot.team)
+        # show_automaton(self.ltl_planner_multi_robot.team)
 
 
     def setup_pub_sub(self):
         # Prefix plan publisher
-        self.prefix_plan_pub = rospy.Publisher('prefix_plan', LTLPlan, latch=True, queue_size = 1)
+        self.plan_pub_1 = rospy.Publisher('/action_plan_1', LTLPlan, latch=True, queue_size = 1)
+        self.plan_pub_2 = rospy.Publisher('/action_plan_2', LTLPlan, latch=True, queue_size = 1)
 
         # Possible states publisher
-        self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
+        # self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub = rospy.Subscriber('ts_state', TransitionSystemStateStamped, self.ltl_state_callback, queue_size=1)
+        # self.state_sub = rospy.Subscriber('ts_state', TransitionSystemStateStamped, self.ltl_state_callback, queue_size=1)
 
         # Initialize publisher to send plan commands
-        self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
+        # self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
 
         # Initialize task replanning service
-        self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
+        # self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
 
         # Subscribe to the replanning status
         self.replan_sub = rospy.Subscriber('replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
 
 
-    def task_replanning_callback(self, task_planning_req):
-        # Extract task specification from request
-        hard_task = task_planning_req.hard_task
-        soft_task = task_planning_req.soft_task
-        # Create response message
-        rsp = TaskPlanningResponse()
-        # Replan and return success status
-        rsp.success = self.ltl_planner.replan_task(hard_task, soft_task, self.ltl_planner.curr_ts_state)
-        # If successful, change parameters
-        if rsp.success:
-            rospy.set_param('hard_task', hard_task)
-            rospy.set_param('soft_task', soft_task)
-        # Return response
-        return rsp
+    # def task_replanning_callback(self, task_planning_req):
+    #     # Extract task specification from request
+    #     hard_task = task_planning_req.hard_task
+    #     soft_task = task_planning_req.soft_task
+    #     # Create response message
+    #     rsp = TaskPlanningResponse()
+    #     # Replan and return success status
+    #     rsp.success = self.ltl_planner.replan_task(hard_task, soft_task, self.ltl_planner.curr_ts_state)
+    #     # If successful, change parameters
+    #     if rsp.success:
+    #         rospy.set_param('hard_task', hard_task)
+    #         rospy.set_param('soft_task', soft_task)
+    #     # Return response
+    #     return rsp
 
 
     def ltl_replan_callback(self, msg):
@@ -200,168 +201,200 @@ class MultiRobot_Planner(object):
 
 
 
-    def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
-        # Extract TS state from message
-        state = handle_ts_state_msg(msg.ts_state)
-
-        #-------------------------
-        # Check if state is in TS
-        #-------------------------
-        if (state in self.robot_model.nodes()):
-
-            # If timestamp check is enabled, check the timestamp
-            if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp.to_sec())):
-                # Update previously received timestamp
-                self.prev_received_timestamp = deepcopy(msg.header.stamp)
-
-                # Update current state
-                self.ltl_planner.curr_ts_state = state
-
-                #-----------------------------------------------------------------------
-                # Try update possible state and if error (forbidden transition), replan
-                #-----------------------------------------------------------------------
-                if not self.ltl_planner.update_possible_states(state):
-                    rospy.logerr('Can not update possible states - forbidden transition, replanning...')
-
-                    # Replan
-                    # self.ltl_planner.replan_from_ts_state(state)
-                    # self.publish_plan()
-
-                    # Publish next move
-                    rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
-                    self.plan_pub.publish(self.ltl_planner.next_move)
-
-                    return
-
-                # Publish possible states
-                self.publish_possible_states()
-
-                #--------------------------
-                # Manage next move in plan
-                #--------------------------
-                # If state is next state in plan, find next_move and output
-                if self.is_next_state_in_plan(state):
-                    self.ltl_planner.find_next_move()
-
-                    # Publish next move
-                    rospy.loginfo('LTL planner: Publishing next move')
-                    self.plan_pub.publish(self.ltl_planner.next_move)
-
-                # If state is not the next one in plan replan
-                elif self.replan_on_unplanned_move:
-                    rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
-                    # Replan with state as initial
-                    # self.ltl_planner.replan_from_ts_state(state)
-                    # self.publish_plan()
-
-                    # Publish next move
-                    self.plan_pub.publish(self.ltl_planner.next_move)
-
-                #-------------
-                # Run plugins
-                #-------------
-                for plugin in self.plugins:
-                    self.plugins[plugin].run_at_ts_update(state)
-
-            # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
-            else:
-                rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
-
-        #--------------------------------------------
-        # If state not part of the transition system
-        #--------------------------------------------
-        else:
-            #ERROR: unknown state (not part of TS)
-            self.plan_pub.publish('None')
-            rospy.logwarn('State is not in TS plan!')
+    # def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
+    #     # Extract TS state from message
+    #     state = handle_ts_state_msg(msg.ts_state)
+    #
+    #     #-------------------------
+    #     # Check if state is in TS
+    #     #-------------------------
+    #     if (state in self.robot_model.nodes()):
+    #
+    #         # If timestamp check is enabled, check the timestamp
+    #         if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp.to_sec())):
+    #             # Update previously received timestamp
+    #             self.prev_received_timestamp = deepcopy(msg.header.stamp)
+    #
+    #             # Update current state
+    #             self.ltl_planner.curr_ts_state = state
+    #
+    #             #-----------------------------------------------------------------------
+    #             # Try update possible state and if error (forbidden transition), replan
+    #             #-----------------------------------------------------------------------
+    #             if not self.ltl_planner.update_possible_states(state):
+    #                 rospy.logerr('Can not update possible states - forbidden transition, replanning...')
+    #
+    #                 # Replan
+    #                 # self.ltl_planner.replan_from_ts_state(state)
+    #                 # self.publish_plan()
+    #
+    #                 # Publish next move
+    #                 rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
+    #                 self.plan_pub.publish(self.ltl_planner.next_move)
+    #
+    #                 return
+    #
+    #             # Publish possible states
+    #             self.publish_possible_states()
+    #
+    #             #--------------------------
+    #             # Manage next move in plan
+    #             #--------------------------
+    #             # If state is next state in plan, find next_move and output
+    #             if self.is_next_state_in_plan(state):
+    #                 self.ltl_planner.find_next_move()
+    #
+    #                 # Publish next move
+    #                 rospy.loginfo('LTL planner: Publishing next move')
+    #                 self.plan_pub.publish(self.ltl_planner.next_move)
+    #
+    #             # If state is not the next one in plan replan
+    #             elif self.replan_on_unplanned_move:
+    #                 rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
+    #                 # Replan with state as initial
+    #                 # self.ltl_planner.replan_from_ts_state(state)
+    #                 # self.publish_plan()
+    #
+    #                 # Publish next move
+    #                 self.plan_pub.publish(self.ltl_planner.next_move)
+    #
+    #             #-------------
+    #             # Run plugins
+    #             #-------------
+    #             for plugin in self.plugins:
+    #                 self.plugins[plugin].run_at_ts_update(state)
+    #
+    #         # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
+    #         else:
+    #             rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
+    #
+    #     #--------------------------------------------
+    #     # If state not part of the transition system
+    #     #--------------------------------------------
+    #     else:
+    #         #ERROR: unknown state (not part of TS)
+    #         self.plan_pub.publish('None')
+    #         rospy.logwarn('State is not in TS plan!')
 
     #-----------------------------------------------------
     # Check if given TS state is the next one in the plan
     #-----------------------------------------------------
-    def is_next_state_in_plan(self, ts_state):
-        # Check if plan is in prefix phase
-        if self.ltl_planner.segment == 'line':
-            # Check if state is the next state of the plan
-            if ts_state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
-                return True
-        # Check if plan is in suffix phase
-        elif self.ltl_planner.segment == 'loop':
-            # Check if state is the next state of the plan
-            if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
-                return True
-        return False
+    # def is_next_state_in_plan(self, ts_state):
+    #     # Check if plan is in prefix phase
+    #     if self.ltl_planner.segment == 'line':
+    #         # Check if state is the next state of the plan
+    #         if ts_state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
+    #             return True
+    #     # Check if plan is in suffix phase
+    #     elif self.ltl_planner.segment == 'loop':
+    #         # Check if state is the next state of the plan
+    #         if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
+    #             return True
+    #     return False
 
     #----------------------------------------------
     # Publish prefix and suffix plans from planner
     #----------------------------------------------
-    def publish_plan(self):
+    def publish_plan_initial(self):
         # If plan exists
-        if not (self.ltl_planner.run == None):
+        if not (self.ltl_planner_multi_robot.plans == None):
             # Prefix plan
             #-------------
-            prefix_plan_msg = LTLPlan()
-            prefix_plan_msg.header.stamp = rospy.Time.now()
-            prefix_plan_msg.action_sequence = self.ltl_planner.run.pre_plan
-            # Go through all TS state in plan and add it as TransitionSystemState message
-            for ts_state in self.ltl_planner.run.line:
-                ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner.product.graph['ts'].graph['ts_state_format'] for item in sublist]
-                # If TS state is more than 1 dimension (is a tuple)
-                if type(ts_state) is tuple:
-                    ts_state_msg.states = list(ts_state)
-                # Else state is a single string
-                else:
-                    ts_state_msg.states = [ts_state]
-                # Add to plan TS state sequence
-                prefix_plan_msg.ts_state_sequence.append(ts_state_msg)
+            plan_1_msg = LTLPlan()
+            plan_1_msg.header.stamp = rospy.Time.now()
+            plan_1_status = False
+            plan_2_msg = LTLPlan()
+            plan_2_msg.header.stamp = rospy.Time.now()
+            plan_2_status = False
 
-            # Publish
-            self.prefix_plan_pub.publish(prefix_plan_msg)
+            # plan_1_msg.action_sequence = self.ltl_planner.run.pre_plan
+            # Go through all TS state in plan and add it as TransitionSystemState message
+            for r_idx, act_seq in self.ltl_planner_multi_robot.plans.action_sequence.items():
+                if r_idx==0 and len(act_seq) != 0:
+                    plan_1_status = True
+                    plan_1_msg.action_sequence = act_seq
+                if r_idx==1 and len(act_seq) != 0:
+                    plan_2_status = True
+                    plan_2_msg.action_sequence = act_seq
+
+            for r_idx, stat_seq in self.ltl_planner_multi_robot.plans.ts_state_sequence.items():
+                if r_idx==0 and plan_1_status:
+                    for ts_state in stat_seq:
+                        ts_state_msg = TransitionSystemState()
+                        ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(ts_state) is tuple:
+                            ts_state_msg.states = list(ts_state)
+                        # Else state is a single string
+                        else:
+                            ts_state_msg.states = [ts_state]
+                        # Add to plan TS state sequence
+                        plan_1_msg.ts_state_sequence.append(ts_state_msg)
+
+                    # Publish
+                    self.plan_pub_1.publish(plan_1_msg)
+
+                if r_idx==1 and plan_2_status:
+                    for ts_state in stat_seq:
+                        ts_state_msg = TransitionSystemState()
+                        ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(ts_state) is tuple:
+                            ts_state_msg.states = list(ts_state)
+                        # Else state is a single string
+                        else:
+                            ts_state_msg.states = [ts_state]
+                        # Add to plan TS state sequence
+                        plan_2_msg.ts_state_sequence.append(ts_state_msg)
+
+                    # Publish
+                    self.plan_pub_2.publish(plan_2_msg)
+
 
             # Suffix plan
             #-------------
-            suffix_plan_msg = LTLPlan()
-            suffix_plan_msg.header.stamp = rospy.Time.now()
-            suffix_plan_msg.action_sequence = self.ltl_planner.run.suf_plan
-            # Go through all TS state in plan and add it as TransitionSystemState message
-            for ts_state in self.ltl_planner.run.loop:
-                ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner.product.graph['ts'].graph['ts_state_format'] for item in sublist]
-                # If TS state is more than 1 dimension (is a tuple)
-                if type(ts_state) is tuple:
-                    ts_state_msg.states = list(ts_state)
-                # Else state is a single string
-                else:
-                    ts_state_msg.states = [ts_state]
-
-                # Add to plan TS state sequence
-                suffix_plan_msg.ts_state_sequence.append(ts_state_msg)
-
-            # Publish
-            self.suffix_plan_pub.publish(suffix_plan_msg)
+            # suffix_plan_msg = LTLPlan()
+            # suffix_plan_msg.header.stamp = rospy.Time.now()
+            # suffix_plan_msg.action_sequence = self.ltl_planner.run.suf_plan
+            # # Go through all TS state in plan and add it as TransitionSystemState message
+            # for ts_state in self.ltl_planner.run.loop:
+            #     ts_state_msg = TransitionSystemState()
+            #     ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner.product.graph['ts'].graph['ts_state_format'] for item in sublist]
+            #     # If TS state is more than 1 dimension (is a tuple)
+            #     if type(ts_state) is tuple:
+            #         ts_state_msg.states = list(ts_state)
+            #     # Else state is a single string
+            #     else:
+            #         ts_state_msg.states = [ts_state]
+            #
+            #     # Add to plan TS state sequence
+            #     suffix_plan_msg.ts_state_sequence.append(ts_state_msg)
+            #
+            # # Publish
+            # self.suffix_plan_pub.publish(suffix_plan_msg)
 
     #-------------------------
     # Publish possible states
     #-------------------------
-    def publish_possible_states(self):
-        # Create message
-        possible_states_msg = LTLStateArray()
-        # For all possible state, add to the message list
-        for ltl_state in self.ltl_planner.product.possible_states:
-            ltl_state_msg = LTLState()
-            # If TS state is more than 1 dimension (is a tuple)
-            if type(ltl_state[0]) is tuple:
-                ltl_state_msg.ts_state.states = list(ltl_state[0])
-            # Else state is a single string
-            else:
-                ltl_state_msg.ts_state.states = [ltl_state[0]]
-
-            ltl_state_msg.ts_state.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
-            ltl_state_msg.buchi_state = str(ltl_state[1])
-            possible_states_msg.ltl_states.append(ltl_state_msg)
-
-        # Publish
-        self.possible_states_pub.publish(possible_states_msg)
+    # def publish_possible_states(self):
+    #     # Create message
+    #     possible_states_msg = LTLStateArray()
+    #     # For all possible state, add to the message list
+    #     for ltl_state in self.ltl_planner.product.possible_states:
+    #         ltl_state_msg = LTLState()
+    #         # If TS state is more than 1 dimension (is a tuple)
+    #         if type(ltl_state[0]) is tuple:
+    #             ltl_state_msg.ts_state.states = list(ltl_state[0])
+    #         # Else state is a single string
+    #         else:
+    #             ltl_state_msg.ts_state.states = [ltl_state[0]]
+    #
+    #         ltl_state_msg.ts_state.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
+    #         ltl_state_msg.buchi_state = str(ltl_state[1])
+    #         possible_states_msg.ltl_states.append(ltl_state_msg)
+    #
+    #     # Publish
+    #     self.possible_states_pub.publish(possible_states_msg)
 
 
 #==============================

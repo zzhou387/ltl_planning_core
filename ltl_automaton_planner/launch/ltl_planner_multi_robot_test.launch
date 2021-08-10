@@ -8,6 +8,7 @@
   <arg name="agent_name_mobile_1" default="openshelf_1"/>
   <arg name="agent_name_mobile_2" default="openshelf_2"/>
   <arg name="agent_name_dog_1" default="a1"/>
+  <arg name="rviz" default="true"/>
 
 <!--   <param name="agent_name" type="string" value="$(arg agent_name)" /> -->
   <!-- hard and soft task parameters -->
@@ -48,10 +49,21 @@
 <!--    <arg name="pose_y" value="0" /> -->
 <!--  </include> -->
 
+  <!-- Run A1 navigation and simulated mocap -->
+  <include file="$(find unitree_navigate)/launch/navigate_mocap.launch">
+    <arg name="agent_name" value="a1_gazebo"/>
+    <arg name="run_mocap" value="true"/>
+  </include>
+
   <include file="$(find openshelf7_navigation)/launch/navigate_mocap.launch">
     <arg name="agent_name" value="openshelf_0" />
     <arg name="run_mocap" value="false"/>
+    <arg name="launch_map" value="false"/>
   </include>
+
+  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz"
+        args="-d $(find unitree_navigate)/rviz/multi_robot_mocap.rviz -f map"
+        output="screen"/>
 
 
 </launch>
