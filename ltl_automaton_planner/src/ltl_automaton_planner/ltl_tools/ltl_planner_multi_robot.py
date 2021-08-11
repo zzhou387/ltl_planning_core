@@ -47,9 +47,17 @@ class LTLPlanner_MultiRobot(object):
 
         if style == 'replan_level_2':
             if self.team:
+                self.
+            else:
+                rospy.logerr("LTL Planner: \"replanning_level_2: \" planning was requested but team model was never built, aborting...")
+                return False
 
         if style == 'replan_level_3':
             if self.team:
+                self
+            else:
+                rospy.logerr("LTL Planner: \"replanning_level_3: \" planning was requested but team model was never built, aborting...")
+                return False
 
         if self.plans == None:
             rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
@@ -57,6 +65,7 @@ class LTLPlanner_MultiRobot(object):
         return True
 
     def replan_level_2(self):
-
+        self.task_allocate(style="replan_level_2")
 
     def replan_level_3(self):
+        self.task_allocate(style="replan_level_3")
