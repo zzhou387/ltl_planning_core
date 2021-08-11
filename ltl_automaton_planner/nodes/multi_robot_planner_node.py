@@ -192,11 +192,12 @@ class MultiRobot_Planner(object):
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2')
             # Replan
-            # self.ltl_planner.replan_from_ts_state(state)
-            # self.publish_plan()
+            self.ltl_planner_multi_robot.replan_level_2()
 
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3')
+            # Replan
+            self.ltl_planner_multi_robot.replan_level_3()
 
 
 

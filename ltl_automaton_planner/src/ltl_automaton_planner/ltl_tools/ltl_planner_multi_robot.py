@@ -45,8 +45,18 @@ class LTLPlanner_MultiRobot(object):
             self.team.build_team()
             self.plans, plan_time = compute_team_plans(self.team)
 
+        if style == 'replan_level_2':
+            if self.team:
+
+        if style == 'replan_level_3':
+            if self.team:
+
         if self.plans == None:
             rospy.logerr("LTL Planner: No valid plan has been found! Check you FTS or task")
             return False
         return True
 
+    def replan_level_2(self):
+
+
+    def replan_level_3(self):
