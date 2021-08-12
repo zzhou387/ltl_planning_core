@@ -16,10 +16,10 @@ class LTLPlanner_MultiRobot(object):
 
         self.pro_list = []
         self.team = None
-        self.curr_ts_state = None
+        self.curr_ts_state_dic = {}
         self.buchi = None
         self.decomposition_set = []
-        self.trace = [] # record the regions been visited
+        self.trace_dic = {} # record the regions been visited
         self.traj = [] # record the full trajectory
 
         self.beta = beta                    # importance of taking soft task into account

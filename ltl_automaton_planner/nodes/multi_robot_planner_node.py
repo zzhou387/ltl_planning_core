@@ -103,7 +103,8 @@ class MultiRobot_Planner(object):
         # Setup dynamic parameters (defined in dynamic_params/cfg/LTL_automaton_dynparam.cfg)
         self.replan_on_unplanned_move = True
         self.check_timestamp = True
-        self.prev_received_timestamp = rospy.Time()
+        self.prev_received_timestamp_1 = rospy.Time()
+        self.prev_received_timestamp_2 = rospy.Time()
 
 
     def init_ts_state_from_agent(self, msg=TransitionSystemStateStamped):
@@ -130,7 +131,9 @@ class MultiRobot_Planner(object):
         state_models_quadruped = state_models_from_ts(self.transition_system_quadruped, self.initial_state_ts_dict)
 
         # Here we take the product of each element of state_models to define the full TS
-        self.ts_list = [TSModel(state_models_mobile), TSModel(state_models_quadruped)]
+        self.robot_model_mobile = TSModel(state_models_mobile)
+        self.robot_model_quadruped = TSModel(state_models_quadruped)
+        self.ts_list = [self.robot_model_mobile, self.robot_model_quadruped]
 
         self.ltl_planner_multi_robot = LTLPlanner_MultiRobot(self.ts_list, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner_multi_robot.task_allocate()
@@ -155,7 +158,8 @@ class MultiRobot_Planner(object):
         # self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        # self.state_sub = rospy.Subscriber('ts_state', TransitionSystemStateStamped, self.ltl_state_callback, queue_size=1)
+        self.state_sub_1 = rospy.Subscriber('/openshelf_0/ts_state', LTLPlan, self.ts_trace_callback_1, queue_size=1)
+        self.state_sub_2 = rospy.Subscriber('/a1_gazebo/ts_state', LTLPlan, self.ts_trace_callback_2, queue_size=1)
 
         # Initialize publisher to send plan commands
         # self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
@@ -164,7 +168,8 @@ class MultiRobot_Planner(object):
         # self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
 
         # Subscribe to the replanning status
-        self.replan_sub = rospy.Subscriber('replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
+        self.replan_sub_1 = rospy.Subscriber('/openshelf_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
+        self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
 
 
     # def task_replanning_callback(self, task_planning_req):
@@ -183,7 +188,7 @@ class MultiRobot_Planner(object):
     #     return rsp
 
 
-    def ltl_replan_callback(self, msg):
+    def ltl_replan_callback_1(self, msg):
         replan_status = msg.data
         rospy.logerr('LTL planner: replanning debug')
         if(replan_status == 0):
@@ -200,82 +205,118 @@ class MultiRobot_Planner(object):
             self.ltl_planner_multi_robot.replan_level_3()
 
 
+    def ltl_replan_callback_2(self, msg):
+        replan_status = msg.data
+        rospy.logerr('LTL planner: replanning debug')
+        if(replan_status == 0):
+            rospy.logerr('LTL planner: replanning ERROR')
+
+        if(replan_status == 2):
+            rospy.logwarn('LTL planner: received replanning Level 2')
+            # Replan
+            self.ltl_planner_multi_robot.replan_level_2()
+
+        if(replan_status == 3):
+            rospy.logwarn('LTL planner: received replanning Level 3')
+            # Replan
+            self.ltl_planner_multi_robot.replan_level_3()
 
 
-    # def ltl_state_callback(self, msg=TransitionSystemStateStamped()):
-    #     # Extract TS state from message
-    #     state = handle_ts_state_msg(msg.ts_state)
-    #
-    #     #-------------------------
-    #     # Check if state is in TS
-    #     #-------------------------
-    #     if (state in self.robot_model.nodes()):
-    #
-    #         # If timestamp check is enabled, check the timestamp
-    #         if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp.to_sec())):
-    #             # Update previously received timestamp
-    #             self.prev_received_timestamp = deepcopy(msg.header.stamp)
-    #
-    #             # Update current state
-    #             self.ltl_planner.curr_ts_state = state
-    #
-    #             #-----------------------------------------------------------------------
-    #             # Try update possible state and if error (forbidden transition), replan
-    #             #-----------------------------------------------------------------------
-    #             if not self.ltl_planner.update_possible_states(state):
-    #                 rospy.logerr('Can not update possible states - forbidden transition, replanning...')
-    #
-    #                 # Replan
-    #                 # self.ltl_planner.replan_from_ts_state(state)
-    #                 # self.publish_plan()
-    #
-    #                 # Publish next move
-    #                 rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
-    #                 self.plan_pub.publish(self.ltl_planner.next_move)
-    #
-    #                 return
-    #
-    #             # Publish possible states
-    #             self.publish_possible_states()
-    #
-    #             #--------------------------
-    #             # Manage next move in plan
-    #             #--------------------------
-    #             # If state is next state in plan, find next_move and output
-    #             if self.is_next_state_in_plan(state):
-    #                 self.ltl_planner.find_next_move()
-    #
-    #                 # Publish next move
-    #                 rospy.loginfo('LTL planner: Publishing next move')
-    #                 self.plan_pub.publish(self.ltl_planner.next_move)
-    #
-    #             # If state is not the next one in plan replan
-    #             elif self.replan_on_unplanned_move:
-    #                 rospy.logwarn('LTL planner: Received state is not the next one in the plan, replanning and publishing next move')
-    #                 # Replan with state as initial
-    #                 # self.ltl_planner.replan_from_ts_state(state)
-    #                 # self.publish_plan()
-    #
-    #                 # Publish next move
-    #                 self.plan_pub.publish(self.ltl_planner.next_move)
-    #
-    #             #-------------
-    #             # Run plugins
-    #             #-------------
-    #             for plugin in self.plugins:
-    #                 self.plugins[plugin].run_at_ts_update(state)
-    #
-    #         # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
-    #         else:
-    #             rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
-    #
-    #     #--------------------------------------------
-    #     # If state not part of the transition system
-    #     #--------------------------------------------
-    #     else:
-    #         #ERROR: unknown state (not part of TS)
-    #         self.plan_pub.publish('None')
-    #         rospy.logwarn('State is not in TS plan!')
+    def ts_trace_callback_1(self, msg=LTLPlan()):
+        # Extract TS state from message
+        state = handle_ts_state_msg(msg.ts_state)
+
+        #-------------------------
+        # Check if state is in TS
+        #-------------------------
+        if (state in self.robot_model_mobile.nodes()):
+
+            # If timestamp check is enabled, check the timestamp
+            if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_1.to_sec())):
+                # Update previously received timestamp
+                self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
+
+                # Update current state
+                self.ltl_planner_multi_robot.current_ts_state_dic[0] = state
+                self.ltl_planner_multi_robot.trace.append(state)
+
+                #-----------------------------------------------------------------------
+                # Try update possible state and if error (forbidden transition), replan
+                #-----------------------------------------------------------------------
+                if not self.ltl_planner.update_possible_states(state):
+                    rospy.logerr('Can not update possible states - forbidden transition, replanning...')
+
+                    # Replan
+                    # self.ltl_planner.replan_from_ts_state(state)
+                    # self.publish_plan()
+
+                    # Publish next move
+                    rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
+                    self.plan_pub.publish(self.ltl_planner.next_move)
+
+                    return
+
+
+
+            # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
+            else:
+                rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
+
+        #--------------------------------------------
+        # If state not part of the transition system
+        #--------------------------------------------
+        else:
+            #ERROR: unknown state (not part of TS)
+            rospy.logwarn('State is not in TS plan!')
+
+
+    def ts_trace_callback_2(self, msg=LTLPlan()):
+        # Extract TS state from message
+
+        state = handle_ts_state_msg(msg.ts_state)
+
+        #-------------------------
+        # Check if state is in TS
+        #-------------------------
+        if (state in self.robot_model_mobile.nodes()):
+
+            # If timestamp check is enabled, check the timestamp
+            if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_1.to_sec())):
+                # Update previously received timestamp
+                self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
+
+                # Update current state
+                self.ltl_planner_multi_robot.current_ts_state_dic[0] = state
+                self.ltl_planner_multi_robot.trace.append(state)
+
+                #-----------------------------------------------------------------------
+                # Try update possible state and if error (forbidden transition), replan
+                #-----------------------------------------------------------------------
+                if not self.ltl_planner.update_possible_states(state):
+                    rospy.logerr('Can not update possible states - forbidden transition, replanning...')
+
+                    # Replan
+                    # self.ltl_planner.replan_from_ts_state(state)
+                    # self.publish_plan()
+
+                    # Publish next move
+                    rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
+                    self.plan_pub.publish(self.ltl_planner.next_move)
+
+                    return
+
+
+
+            # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
+            else:
+                rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
+
+        #--------------------------------------------
+        # If state not part of the transition system
+        #--------------------------------------------
+        else:
+            #ERROR: unknown state (not part of TS)
+            rospy.logwarn('State is not in TS plan!')
 
     #-----------------------------------------------------
     # Check if given TS state is the next one in the plan
