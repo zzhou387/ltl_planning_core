@@ -40,6 +40,16 @@ state_models:
                     hysteresis: 0.05
                 connected_to:
                     r2: "goto_r2"
+                    r4: "goto_r4"
+
+            r4:
+                attr:
+                    type: "square"
+                    pose: [ [ 0,15 ], [ 0 ] ]
+                    length: 2
+                    hysteresis: 0.05
+                connected_to:
+                    r3: "goto_r3"
 #    turtlebot_load:
 #        ts_type: "turtlebot_load"
 #        initial: "unloaded"
@@ -73,6 +83,13 @@ actions:
         attr:
             region: r3
             pose: [[0,11,0], [0,0,0,1]]
+    goto_r4:
+        type: "move"
+        weight: 10
+        guard: "1"
+        attr:
+            region: r3
+            pose: [[0,15,0 ], [ 0,0,0,1 ] ]
               #    pick:
               #        type: "turtlebot_pick"
               #        guard: "r2"

@@ -158,8 +158,8 @@ class MultiRobot_Planner(object):
         # self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        self.state_sub_1 = rospy.Subscriber('/openshelf_0/ts_state', LTLPlan, self.ts_trace_callback_1, queue_size=1)
-        self.state_sub_2 = rospy.Subscriber('/a1_gazebo/ts_state', LTLPlan, self.ts_trace_callback_2, queue_size=1)
+        self.trace_sub_1 = rospy.Subscriber('/openshelf_0/ts_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
+        self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ts_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
 
         # Initialize publisher to send plan commands
         # self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
@@ -172,54 +172,92 @@ class MultiRobot_Planner(object):
         self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
 
 
-    # def task_replanning_callback(self, task_planning_req):
-    #     # Extract task specification from request
-    #     hard_task = task_planning_req.hard_task
-    #     soft_task = task_planning_req.soft_task
-    #     # Create response message
-    #     rsp = TaskPlanningResponse()
-    #     # Replan and return success status
-    #     rsp.success = self.ltl_planner.replan_task(hard_task, soft_task, self.ltl_planner.curr_ts_state)
-    #     # If successful, change parameters
-    #     if rsp.success:
-    #         rospy.set_param('hard_task', hard_task)
-    #         rospy.set_param('soft_task', soft_task)
-    #     # Return response
-    #     return rsp
-
-
     def ltl_replan_callback_1(self, msg):
         replan_status = msg.data
-        rospy.logerr('LTL planner: replanning debug')
         if(replan_status == 0):
             rospy.logerr('LTL planner: replanning ERROR')
 
+        if(replan_status == 1):
+            rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 1')
+            #Replan
+            #TODO: Add ros service for requesting the synchronization
+            while not self.ltl_planner_multi_robot.trace:
+                rospy.logwarn('Waiting for the trace callback from agent 1')
+
+            if self.ltl_planner_multi_robot.replan_level_1():
+                self.publish_plan_initial()
+
         if(replan_status == 2):
-            rospy.logwarn('LTL planner: received replanning Level 2')
+            rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change')
             # Replan
-            self.ltl_planner_multi_robot.replan_level_2()
+            while not self.ltl_planner_multi_robot.trace:
+                rospy.logwarn('Waiting for the trace callback from agent 1')
+
+            level_flag, success = self.ltl_planner_multi_robot.replan_level_2()
+            if success:
+                if level_flag=="Local":
+                    self.publish_local()
+
+                if level_flag=="Global":
+                    self.publish_plan_initial()
 
         if(replan_status == 3):
-            rospy.logwarn('LTL planner: received replanning Level 3')
+            rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change')
             # Replan
-            self.ltl_planner_multi_robot.replan_level_3()
+            while not (self.ltl_planner_multi_robot.trace and self.ltl_planner_multi_robot.ts_info):
+                rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
+
+            level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
+            if success:
+                if level_flag=="Local":
+                    self.publish_local()
+
+                if level_flag=="Global":
+                    self.publish_plan_initial()
 
 
     def ltl_replan_callback_2(self, msg):
         replan_status = msg.data
-        rospy.logerr('LTL planner: replanning debug')
         if(replan_status == 0):
             rospy.logerr('LTL planner: replanning ERROR')
 
+        if(replan_status == 1):
+            rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 1')
+            #Replan
+            #TODO: Add ros service for requesting the synchronization
+            while not self.ltl_planner_multi_robot.trace:
+                rospy.logwarn('Waiting for the trace callback from agent 1')
+
+            if self.ltl_planner_multi_robot.replan_level_1():
+                self.publish_plan_initial()
+
         if(replan_status == 2):
-            rospy.logwarn('LTL planner: received replanning Level 2')
+            rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change')
             # Replan
-            self.ltl_planner_multi_robot.replan_level_2()
+            while not self.ltl_planner_multi_robot.trace:
+                rospy.logwarn('Waiting for the trace callback from agent 1')
+
+            level_flag, success = self.ltl_planner_multi_robot.replan_level_2()
+            if success:
+                if level_flag=="Local":
+                    self.publish_local()
+
+                if level_flag=="Global":
+                    self.publish_plan_initial()
 
         if(replan_status == 3):
-            rospy.logwarn('LTL planner: received replanning Level 3')
+            rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change')
             # Replan
-            self.ltl_planner_multi_robot.replan_level_3()
+            while not (self.ltl_planner_multi_robot.trace and self.ltl_planner_multi_robot.ts_info):
+                rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
+
+            level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
+            if success:
+                if level_flag=="Local":
+                    self.publish_local()
+
+                if level_flag=="Global":
+                    self.publish_plan_initial()
 
 
     def ts_trace_callback_1(self, msg=LTLPlan()):
@@ -238,25 +276,7 @@ class MultiRobot_Planner(object):
 
                 # Update current state
                 self.ltl_planner_multi_robot.current_ts_state_dic[0] = state
-                self.ltl_planner_multi_robot.trace.append(state)
-
-                #-----------------------------------------------------------------------
-                # Try update possible state and if error (forbidden transition), replan
-                #-----------------------------------------------------------------------
-                if not self.ltl_planner.update_possible_states(state):
-                    rospy.logerr('Can not update possible states - forbidden transition, replanning...')
-
-                    # Replan
-                    # self.ltl_planner.replan_from_ts_state(state)
-                    # self.publish_plan()
-
-                    # Publish next move
-                    rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
-                    self.plan_pub.publish(self.ltl_planner.next_move)
-
-                    return
-
-
+                self.ltl_planner_multi_robot.trace_dic[0].append(state)
 
             # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
             else:
@@ -272,7 +292,6 @@ class MultiRobot_Planner(object):
 
     def ts_trace_callback_2(self, msg=LTLPlan()):
         # Extract TS state from message
-
         state = handle_ts_state_msg(msg.ts_state)
 
         #-------------------------
@@ -286,26 +305,8 @@ class MultiRobot_Planner(object):
                 self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
 
                 # Update current state
-                self.ltl_planner_multi_robot.current_ts_state_dic[0] = state
-                self.ltl_planner_multi_robot.trace.append(state)
-
-                #-----------------------------------------------------------------------
-                # Try update possible state and if error (forbidden transition), replan
-                #-----------------------------------------------------------------------
-                if not self.ltl_planner.update_possible_states(state):
-                    rospy.logerr('Can not update possible states - forbidden transition, replanning...')
-
-                    # Replan
-                    # self.ltl_planner.replan_from_ts_state(state)
-                    # self.publish_plan()
-
-                    # Publish next move
-                    rospy.logwarn('LTL planner: error in possible states, replanning done and publishing next move')
-                    self.plan_pub.publish(self.ltl_planner.next_move)
-
-                    return
-
-
+                self.ltl_planner_multi_robot.current_ts_state_dic[1] = state
+                self.ltl_planner_multi_robot.trace_dic[1].append(state)
 
             # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
             else:
@@ -318,21 +319,6 @@ class MultiRobot_Planner(object):
             #ERROR: unknown state (not part of TS)
             rospy.logwarn('State is not in TS plan!')
 
-    #-----------------------------------------------------
-    # Check if given TS state is the next one in the plan
-    #-----------------------------------------------------
-    # def is_next_state_in_plan(self, ts_state):
-    #     # Check if plan is in prefix phase
-    #     if self.ltl_planner.segment == 'line':
-    #         # Check if state is the next state of the plan
-    #         if ts_state == self.ltl_planner.run.line[self.ltl_planner.index+1]:
-    #             return True
-    #     # Check if plan is in suffix phase
-    #     elif self.ltl_planner.segment == 'loop':
-    #         # Check if state is the next state of the plan
-    #         if ts_state == self.ltl_planner.run.loop[self.ltl_planner.index+1]:
-    #             return True
-    #     return False
 
     #----------------------------------------------
     # Publish prefix and suffix plans from planner
@@ -393,50 +379,9 @@ class MultiRobot_Planner(object):
                     self.plan_pub_2.publish(plan_2_msg)
 
 
-            # Suffix plan
-            #-------------
-            # suffix_plan_msg = LTLPlan()
-            # suffix_plan_msg.header.stamp = rospy.Time.now()
-            # suffix_plan_msg.action_sequence = self.ltl_planner.run.suf_plan
-            # # Go through all TS state in plan and add it as TransitionSystemState message
-            # for ts_state in self.ltl_planner.run.loop:
-            #     ts_state_msg = TransitionSystemState()
-            #     ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner.product.graph['ts'].graph['ts_state_format'] for item in sublist]
-            #     # If TS state is more than 1 dimension (is a tuple)
-            #     if type(ts_state) is tuple:
-            #         ts_state_msg.states = list(ts_state)
-            #     # Else state is a single string
-            #     else:
-            #         ts_state_msg.states = [ts_state]
-            #
-            #     # Add to plan TS state sequence
-            #     suffix_plan_msg.ts_state_sequence.append(ts_state_msg)
-            #
-            # # Publish
-            # self.suffix_plan_pub.publish(suffix_plan_msg)
-
-    #-------------------------
-    # Publish possible states
-    #-------------------------
-    # def publish_possible_states(self):
-    #     # Create message
-    #     possible_states_msg = LTLStateArray()
-    #     # For all possible state, add to the message list
-    #     for ltl_state in self.ltl_planner.product.possible_states:
-    #         ltl_state_msg = LTLState()
-    #         # If TS state is more than 1 dimension (is a tuple)
-    #         if type(ltl_state[0]) is tuple:
-    #             ltl_state_msg.ts_state.states = list(ltl_state[0])
-    #         # Else state is a single string
-    #         else:
-    #             ltl_state_msg.ts_state.states = [ltl_state[0]]
-    #
-    #         ltl_state_msg.ts_state.state_dimension_names = self.ltl_planner.product.graph['ts'].graph['ts_state_format']
-    #         ltl_state_msg.buchi_state = str(ltl_state[1])
-    #         possible_states_msg.ltl_states.append(ltl_state_msg)
-    #
-    #     # Publish
-    #     self.possible_states_pub.publish(possible_states_msg)
+    def publish_local(self):
+        #TODO
+        return True
 
 
 #==============================

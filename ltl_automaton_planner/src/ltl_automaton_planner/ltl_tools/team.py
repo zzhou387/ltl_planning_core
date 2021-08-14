@@ -68,10 +68,23 @@ class TeamModel(DiGraph):
                 guard = self.graph['pro_list'][self.nodes[node]['rname']].graph['buchi'].edges[next_buchi_state, next_buchi_state]['guard']
 
                 if guard.check(label):
-                    self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=-10)
+                    self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
 
         rospy.loginfo('Decomposition finished: buchi automation contains %d decomposable states' %(len(self.graph['decomposition_set'])))
         rospy.loginfo('LTL Planner Multi Robot: full team model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
+
+
+    def revise_team(self, trace):
+        self.add_edge()
+
+
+    def revise_local_pa(self, trace):
+        self.add_edge()
+
+
+    def update_local_pa(self, trace):
+        self.add_edge()
+
 
     def projection(self, team_node):
         rname = self.nodes[team_node]['rname']

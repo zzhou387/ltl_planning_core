@@ -31,3 +31,6 @@ def compute_team_plans(team):
 
     rospy.logerr('No accepting run found in optimal planning!')
     return None, None
+
+def compute_local_plan(team):
+    return None, None
