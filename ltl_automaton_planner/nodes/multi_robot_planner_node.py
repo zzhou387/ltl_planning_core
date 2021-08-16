@@ -349,7 +349,7 @@ class MultiRobot_Planner(object):
                 if r_idx==0 and plan_1_status:
                     for ts_state in stat_seq:
                         ts_state_msg = TransitionSystemState()
-                        ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
+                        ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list_initial[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
                         # If TS state is more than 1 dimension (is a tuple)
                         if type(ts_state) is tuple:
                             ts_state_msg.states = list(ts_state)
@@ -365,7 +365,7 @@ class MultiRobot_Planner(object):
                 if r_idx==1 and plan_2_status:
                     for ts_state in stat_seq:
                         ts_state_msg = TransitionSystemState()
-                        ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
+                        ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list_initial[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
                         # If TS state is more than 1 dimension (is a tuple)
                         if type(ts_state) is tuple:
                             ts_state_msg.states = list(ts_state)

@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "r3"
+    initial: "r2"
     nodes:
       r1:
         attr:

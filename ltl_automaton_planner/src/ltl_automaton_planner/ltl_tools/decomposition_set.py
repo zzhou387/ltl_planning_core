@@ -14,7 +14,7 @@ def get_decomposition_set(buchi):
     decomp_set += [final[0]]
     debug1 = buchi.nodes
     for b_node in buchi.nodes:
-        if b_node == initial[0] or b_node == final[0]:
+        if b_node in decomp_set:
             continue
 
         try:
@@ -41,6 +41,7 @@ def get_decomposition_set(buchi):
 
             for tau_00 in tau:
                 selected = False
+                potential_node = None
                 for succ in buchi.successors(current_node):
                     debug0 = [buchi.edges[current_node, succ]['guard_formula']]
                     transition_can = buchi.edges[current_node, succ]['guard_formula']
@@ -49,10 +50,13 @@ def get_decomposition_set(buchi):
                         current_node = unicode(succ)
                         selected = True
                         break
+                    if transition_can == unicode("(1)") or transition_can == "1":
+                        potential_node = unicode(succ)
 
-                if (not selected) and (current_node in buchi.successors(current_node)) and (buchi.edges[current_node, current_node]['guard_formula'] == unicode("(1)") or buchi.edges[current_node, current_node]['guard_formula'] == "1"):
-                    essential_run += [current_node]
+                if (not selected) and potential_node is not None:
+                    essential_run += [potential_node]
                     selected = True
+                    potential_node = None
 
                 if not selected:
                     rospy.logerr("ERROR WHEN EXPANDING THE SEQUENCE")

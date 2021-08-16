@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region"]
 state_models:
     2d_pose_region:
         ts_type: "2d_pose_region"
-        initial: "r1"
+        initial: "r3"
         nodes:
             r1:
                 attr:
@@ -64,28 +64,28 @@ state_models:
 actions:
     goto_r1:
         type: "move"
-        weight: 10
+        weight: 100
         guard: "1"
         attr:
             region: r1
             pose: [[0,0,0], [0,0,0,1]]
     goto_r2:
         type: "move"
-        weight: 10
+        weight: 100
         guard: "1"
         attr:
             region: r2
             pose: [[0,5,0], [0,0,0,1]]
     goto_r3:
         type: "move"
-        weight: 10
+        weight: 100
         guard: "1"
         attr:
             region: r3
             pose: [[0,11,0], [0,0,0,1]]
     goto_r4:
         type: "move"
-        weight: 10
+        weight: 100
         guard: "1"
         attr:
             region: r3

@@ -64,18 +64,49 @@ class TeamModel(DiGraph):
                 next_node = (next_rname, next_ts_state, next_buchi_state)
 
                 # Check self-transition and the respective condition is fulfilled
-                label = self.graph['pro_list'][self.nodes[node]['rname']].graph['ts'].nodes[self.nodes[node]['ts']]['label']
-                guard = self.graph['pro_list'][self.nodes[node]['rname']].graph['buchi'].edges[next_buchi_state, next_buchi_state]['guard']
+                # label = self.graph['pro_list'][self.nodes[node]['rname']].graph['ts'].nodes[self.nodes[node]['ts']]['label']
+                #
+                # try:
+                #     guard = self.graph['pro_list'][self.nodes[node]['rname']].graph['buchi'].edges[next_buchi_state, next_buchi_state]['guard']
+                #     if guard.check(label):
+                #         self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
+                # except:
+                #     rospy.logwarn('No self-transition at: ')
+                #     print(next_buchi_state)
 
-                if guard.check(label):
-                    self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
+                self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
+
+
 
         rospy.loginfo('Decomposition finished: buchi automation contains %d decomposable states' %(len(self.graph['decomposition_set'])))
         rospy.loginfo('LTL Planner Multi Robot: full team model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
 
 
-    def revise_team(self, trace):
-        self.add_edge()
+    def revise_team(self):
+        #For testing
+        init_node = (0, ('r3',), unicode('T0_init'))
+        curr_node = (0, ('r3',), unicode('T3_S5'))
+        self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+
+        init_node = (0, ('r2',), unicode('T0_init'))
+        curr_node = (0, ('r2',), unicode('T3_S5'))
+        self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+
+        init_node = (0, ('r1',), unicode('T0_init'))
+        curr_node = (0, ('r1',), unicode('T3_S5'))
+        self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+
+        init_node = (1, ('r3',), unicode('T0_init'))
+        curr_node = (1, ('r3',), unicode('T3_S5'))
+        self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+
+        init_node = (1, ('r2',), unicode('T0_init'))
+        curr_node = (1, ('r2',), unicode('T3_S5'))
+        self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+
+        init_node = (1, ('r1',), unicode('T0_init'))
+        curr_node = (1, ('r1',), unicode('T3_S5'))
+        self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
 
 
     def revise_local_pa(self, trace):
