@@ -82,6 +82,9 @@ class TeamModel(DiGraph):
         rospy.loginfo('LTL Planner Multi Robot: full team model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
 
 
+    def build_initial(self):
+
+
     def revise_team(self):
         #For testing
         init_node = (0, ('r3',), unicode('T0_init'))
