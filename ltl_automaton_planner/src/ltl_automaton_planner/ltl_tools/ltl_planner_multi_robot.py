@@ -16,12 +16,12 @@ class LTLPlanner_MultiRobot(object):
 
         self.pro_list_initial = []
         self.team = None
-        self.curr_ts_state_dic = {}
         self.buchi = None
         self.decomposition_set = []
         self.trace_dic = {} # record the regions been visited
         self.traj = [] # record the full trajectory
         self.ts_info = None
+        self.local_replan_rname = None
 
         self.beta = beta                    # importance of taking soft task into account
         self.gamma = gamma                  # cost ratio between prefix and suffix
@@ -45,15 +45,15 @@ class LTLPlanner_MultiRobot(object):
             self.team = TeamModel(self.pro_list_initial, self.decomposition_set)
             self.team.build_team()
             self.plans, plan_time = compute_team_plans(self.team)
-            if self.plans == None:
+            if self.plans is None:
                 rospy.logerr("LTL Planner: No valid plan has been found!")
                 return False
 
         if style == 'Global':
             if self.team:
-                self.team.revise_team(self.trace_dic)
+                self.team.revise_team(self.trace_dic, self.plans)
                 self.plans, plan_time = compute_team_plans(self.team)
-                if self.plans == None:
+                if self.plans is None:
                     rospy.logerr("LTL Planner: No valid reallocation plan has been found!")
                     return False
             else:
@@ -62,9 +62,9 @@ class LTLPlanner_MultiRobot(object):
 
         if style == 'Local_state_change':
             if self.team:
-                self.team.update_local_pa(self.trace_dic)
+                self.team.update_local_pa(self.trace_dic[self.local_replan_rname])
                 self.local_plan, self.local_plan_time = compute_local_plan(self.team)
-                if self.local_plan == None:
+                if self.local_plan is None:
                     rospy.logwarn("LTL Planner: No valid local plan has been found given state change! Try global option")
                     return False
 
@@ -74,9 +74,9 @@ class LTLPlanner_MultiRobot(object):
 
         if style == 'Local_ts_update':
             if self.team:
-                self.team.revise_local_pa(self.trace_dic)
+                self.team.revise_local_pa(self.trace_dic[self.local_replan_rname])
                 self.local_plan, self.local_plan_time = compute_local_plan(self.team)
-                if self.local_plan == None:
+                if self.local_plan is None:
                     rospy.logwarn("LTL Planner: No valid local plan has been found given TS updates! Try global option")
                     return False
             else:
@@ -94,6 +94,7 @@ class LTLPlanner_MultiRobot(object):
         if self.task_allocate(style="Local_state_change"):
             return "Local", True
 
+        #TODO: Add ros service for requesting the synchronization
         if self.task_allocate(style="Global"):
             return "Global", True
 
@@ -106,6 +107,7 @@ class LTLPlanner_MultiRobot(object):
         if self.task_allocate(style="Local_ts_update"):
             return "Local", True
 
+        #TODO: Add ros service for requesting the synchronization
         if self.task_allocate(style="Global"):
             return "Global", True
 

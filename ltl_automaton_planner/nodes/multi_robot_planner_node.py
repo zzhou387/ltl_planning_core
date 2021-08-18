@@ -181,39 +181,58 @@ class MultiRobot_Planner(object):
             rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 1')
             #Replan
             #TODO: Add ros service for requesting the synchronization
-            while not self.ltl_planner_multi_robot.trace:
+            while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
                 rospy.logwarn('Waiting for the trace callback from agent 1')
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
+                self.ltl_planner_multi_robot.trace_dic = {}
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change')
             # Replan
-            while not self.ltl_planner_multi_robot.trace:
+            if self.ltl_planner_multi_robot.local_replan_rname is not None:
+                self.ltl_planner_multi_robot.local_replan_rname = 0
+            else:
+                rospy.logerr("LTL planner: local replan rname is not empty")
+
+            while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
                 rospy.logwarn('Waiting for the trace callback from agent 1')
 
             level_flag, success = self.ltl_planner_multi_robot.replan_level_2()
             if success:
                 if level_flag=="Local":
                     self.publish_local()
+                    self.ltl_planner_multi_robot.trace_dic[0] = list()
+                    self.local_replan_rname = None
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    self.ltl_planner_multi_robot.trace_dic = {}
+                    self.local_replan_rname = None
 
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change')
             # Replan
-            while not (self.ltl_planner_multi_robot.trace and self.ltl_planner_multi_robot.ts_info):
+            if self.ltl_planner_multi_robot.local_replan_rname is not None:
+                self.ltl_planner_multi_robot.local_replan_rname = 0
+            else:
+                rospy.logerr("LTL planner: local replan rname is not empty")
+
+            while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
                 rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
 
             level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
             if success:
                 if level_flag=="Local":
                     self.publish_local()
+                    self.ltl_planner_multi_robot.trace_dic[0] = list()
+                    self.local_replan_rname = None
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    self.ltl_planner_multi_robot.trace_dic = {}
+                    self.local_replan_rname = None
 
 
     def ltl_replan_callback_2(self, msg):
@@ -222,103 +241,117 @@ class MultiRobot_Planner(object):
             rospy.logerr('LTL planner: replanning ERROR')
 
         if(replan_status == 1):
-            rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 1')
+            rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 2')
             #Replan
             #TODO: Add ros service for requesting the synchronization
-            while not self.ltl_planner_multi_robot.trace:
-                rospy.logwarn('Waiting for the trace callback from agent 1')
+            while len(self.ltl_planner_multi_robot.trace_dic[1]) == 0:
+                rospy.logwarn('Waiting for the trace callback from agent 2')
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
+                self.ltl_planner_multi_robot.trace_dic = {}
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change')
             # Replan
-            while not self.ltl_planner_multi_robot.trace:
-                rospy.logwarn('Waiting for the trace callback from agent 1')
+            if self.ltl_planner_multi_robot.local_replan_rname is not None:
+                self.ltl_planner_multi_robot.local_replan_rname = 1
+            else:
+                rospy.logerr("LTL planner: local replan rname is not empty")
+
+            while len(self.ltl_planner_multi_robot.trace_dic[1]) == 0:
+                rospy.logwarn('Waiting for the trace callback from agent 2')
 
             level_flag, success = self.ltl_planner_multi_robot.replan_level_2()
             if success:
                 if level_flag=="Local":
                     self.publish_local()
+                    self.ltl_planner_multi_robot.trace_dic[1] = list()
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    self.ltl_planner_multi_robot.trace_dic = {}
 
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change')
             # Replan
-            while not (self.ltl_planner_multi_robot.trace and self.ltl_planner_multi_robot.ts_info):
-                rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
+            if self.ltl_planner_multi_robot.local_replan_rname is not None:
+                self.ltl_planner_multi_robot.local_replan_rname = 1
+            else:
+                rospy.logerr("LTL planner: local replan rname is not empty")
+
+            while len(self.ltl_planner_multi_robot.trace_dic[1]) == 0:
+                rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 2')
 
             level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
             if success:
                 if level_flag=="Local":
                     self.publish_local()
+                    self.ltl_planner_multi_robot.trace_dic[1] = list()
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    self.ltl_planner_multi_robot.trace_dic = {}
 
 
     def ts_trace_callback_1(self, msg=LTLPlan()):
         # Extract TS state from message
-        state = handle_ts_state_msg(msg.ts_state)
+        if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_1.to_sec())):
+            # Update previously received timestamp
+            self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
+            self.ltl_planner_multi_robot.trace_dic[0] = list()
 
+            for state_msg in msg.ts_state_sequence:
+                state = handle_ts_state_msg(state_msg)
 
-        #-------------------------
-        # Check if state is in TS
-        #-------------------------
-        if (state in self.robot_model_mobile.nodes()):
+                #-------------------------
+                # Check if state is in TS
+                #-------------------------
+                if (state in self.robot_model_mobile.nodes()):
 
-            # If timestamp check is enabled, check the timestamp
-            if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_1.to_sec())):
-                # Update previously received timestamp
-                self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
+                    # Update trace for robot 1
+                    self.ltl_planner_multi_robot.trace_dic[0].append(state)
 
-                # Update current state
-                self.ltl_planner_multi_robot.current_ts_state_dic[0] = state
-                self.ltl_planner_multi_robot.trace_dic[0].append(state)
-
-            # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
-            else:
-                rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
-
-        #--------------------------------------------
-        # If state not part of the transition system
-        #--------------------------------------------
+                #--------------------------------------------
+                # If state not part of the transition system
+                #--------------------------------------------
+                else:
+                    #ERROR: unknown state (not part of TS)
+                    rospy.logwarn('State is not in TS plan!')
         else:
-            #ERROR: unknown state (not part of TS)
-            rospy.logwarn('State is not in TS plan!')
+            rospy.logwarn("LTL planner: not updating with received trace, timestamp identical to previously received message timestamp at time %f" %self.prev_received_timestamp.to_sec())
+
+
 
 
     def ts_trace_callback_2(self, msg=LTLPlan()):
         # Extract TS state from message
-        state = handle_ts_state_msg(msg.ts_state)
+        if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_2.to_sec())):
+            # Update previously received timestamp
+            self.prev_received_timestamp_2 = deepcopy(msg.header.stamp)
+            self.ltl_planner_multi_robot.trace_dic[1] = list()
+            self.ltl_planner_multi_robot.local_replan_rname = 1
 
-        #-------------------------
-        # Check if state is in TS
-        #-------------------------
-        if (state in self.robot_model_mobile.nodes()):
+            for state_msg in msg.ts_state_sequence:
+                state = handle_ts_state_msg(state_msg)
 
-            # If timestamp check is enabled, check the timestamp
-            if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_1.to_sec())):
-                # Update previously received timestamp
-                self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
+                #-------------------------
+                # Check if state is in TS
+                #-------------------------
+                if (state in self.robot_model_quadruped.nodes()):
 
-                # Update current state
-                self.ltl_planner_multi_robot.current_ts_state_dic[1] = state
-                self.ltl_planner_multi_robot.trace_dic[1].append(state)
+                    # Update trace for robot 2
+                    self.ltl_planner_multi_robot.trace_dic[1].append(state)
 
-            # If timestamp is indentical to previoulsy received message and parameters "check_timestamp" is true
-            else:
-                rospy.logwarn("LTL planner: not updating with received TS state %s, timestamp identical to previously received message timestamp at time %f" % (str(state), self.prev_received_timestamp.to_sec()))
-
-        #--------------------------------------------
-        # If state not part of the transition system
-        #--------------------------------------------
+                #--------------------------------------------
+                # If state not part of the transition system
+                #--------------------------------------------
+                else:
+                    #ERROR: unknown state (not part of TS)
+                    rospy.logwarn('State is not in TS plan!')
         else:
-            #ERROR: unknown state (not part of TS)
-            rospy.logwarn('State is not in TS plan!')
+            rospy.logwarn("LTL planner: not updating with received trace, timestamp identical to previously received message timestamp at time %f" %self.prev_received_timestamp.to_sec())
+
 
 
     #----------------------------------------------
