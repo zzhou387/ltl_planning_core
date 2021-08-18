@@ -158,8 +158,8 @@ class MultiRobot_Planner(object):
         # self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        self.trace_sub_1 = rospy.Subscriber('/openshelf_0/ts_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
-        self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ts_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
+        self.trace_sub_1 = rospy.Subscriber('/openshelf_0/ltl_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
+        self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ltl_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
 
         # Initialize publisher to send plan commands
         # self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
@@ -263,6 +263,7 @@ class MultiRobot_Planner(object):
     def ts_trace_callback_1(self, msg=LTLPlan()):
         # Extract TS state from message
         state = handle_ts_state_msg(msg.ts_state)
+
 
         #-------------------------
         # Check if state is in TS

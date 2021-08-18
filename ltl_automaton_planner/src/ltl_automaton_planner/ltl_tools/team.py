@@ -83,7 +83,9 @@ class TeamModel(DiGraph):
 
 
     def build_initial(self):
-
+        #After synchronization the initial states need to be updated
+        self.graph['initials'] = set()
+        self.graph['initial'] = set()
 
     def revise_team(self):
         #For testing
