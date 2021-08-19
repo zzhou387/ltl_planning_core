@@ -88,35 +88,57 @@ class TeamModel(DiGraph):
         self.graph['initial'] = set()
 
     def revise_team(self, trace_dic, rname, old_run):
+        assert len(trace_dic) == len(self.graph['pro_list'])
+        for name in range(len(trace_dic)):
+            ts_trace = trace_dic[name]
+            pa_plan = old_run.state_sequence[name]
+            for ts, pa in zip(ts_trace[:-1], pa_plan):
+                name_, ts_, buchi_ = self.projection(pa)
+                assert ts == ts_
+                assert name == name_
 
+            paused_ts = ts_trace[-1]
+            name0, plan_ts, curr_buchi = self.projection(pa_plan[len(ts_trace)-1])
+            if name != rname:
+                assert name == name0
+                assert plan_ts == paused_ts
 
-        #For testing
-        if len(trace_dic) == len(self.graph['pro_list']):
-            init_node = (0, ('r3',), unicode('T0_init'))
-            curr_node = (0, ('r3',), unicode('T3_S5'))
-            self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+            name00, initi_ts, init_buchi = self.projection(pa_plan[0])
+            for ts_node in self.graph['pro_list'][name].graph['ts'].nodes:
+                init_team_node = (name, ts_node, init_buchi)
+                curr_team_node = (name, ts_node, curr_buchi)
+                self.add_edge(init_buchi, curr_buchi, transition_cost=0, action='synchronized_transition', weight=0)
 
-            init_node = (0, ('r2',), unicode('T0_init'))
-            curr_node = (0, ('r2',), unicode('T3_S5'))
-            self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
-
-            init_node = (0, ('r1',), unicode('T0_init'))
-            curr_node = (0, ('r1',), unicode('T3_S5'))
-            self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
-
-            init_node = (1, ('r3',), unicode('T0_init'))
-            curr_node = (1, ('r3',), unicode('T3_S5'))
-            self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
-
-            init_node = (1, ('r2',), unicode('T0_init'))
-            curr_node = (1, ('r2',), unicode('T3_S5'))
-            self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
-
-            init_node = (1, ('r1',), unicode('T0_init'))
-            curr_node = (1, ('r1',), unicode('T3_S5'))
-            self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
-        else:
-            rospy.logerr('Number of trace does not match the number of robots')
+        # for name, list in trace_dic.item():
+        #     init_node = (name, )
+        #
+        # #For testing
+        # if len(trace_dic) == len(self.graph['pro_list']):
+        #     init_node = (0, ('r3',), unicode('T0_init'))
+        #     curr_node = (0, ('r3',), unicode('T3_S5'))
+        #     self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+        #
+        #     init_node = (0, ('r2',), unicode('T0_init'))
+        #     curr_node = (0, ('r2',), unicode('T3_S5'))
+        #     self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+        #
+        #     init_node = (0, ('r1',), unicode('T0_init'))
+        #     curr_node = (0, ('r1',), unicode('T3_S5'))
+        #     self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+        #
+        #     init_node = (1, ('r3',), unicode('T0_init'))
+        #     curr_node = (1, ('r3',), unicode('T3_S5'))
+        #     self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+        #
+        #     init_node = (1, ('r2',), unicode('T0_init'))
+        #     curr_node = (1, ('r2',), unicode('T3_S5'))
+        #     self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+        #
+        #     init_node = (1, ('r1',), unicode('T0_init'))
+        #     curr_node = (1, ('r1',), unicode('T3_S5'))
+        #     self.add_edge(init_node, curr_node, transition_cost=0, action='test_transition', weight=0)
+        # else:
+        #     rospy.logerr('Number of trace does not match the number of robots')
 
 
     def revise_local_pa(self, trace_dic, rname, old_run):
