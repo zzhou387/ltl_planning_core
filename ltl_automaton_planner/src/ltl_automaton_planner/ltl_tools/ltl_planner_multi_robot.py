@@ -50,37 +50,38 @@ class LTLPlanner_MultiRobot(object):
                 return False
 
         if style == 'Global':
-            if self.team:
-                self.team.revise_team(self.trace_dic, self.plans)
+            if self.team and self.plans:
+                self.team.revise_team(self.trace_dic, self.local_replan_rname, self.plans)
                 self.plans, plan_time = compute_team_plans(self.team)
                 if self.plans is None:
                     rospy.logerr("LTL Planner: No valid reallocation plan has been found!")
                     return False
             else:
-                rospy.logerr("LTL Planner: \"replanning_global: \" planning was requested but team model was never built, aborting...")
+                rospy.logerr("LTL Planner: \"replanning_global: \" planning was requested but team model or previous plan was never built, aborting...")
                 return False
 
         if style == 'Local_state_change':
-            if self.team:
-                self.team.update_local_pa(self.trace_dic[self.local_replan_rname])
-                self.local_plan, self.local_plan_time = compute_local_plan(self.team)
+            if self.team and self.plans:
+                self.team.update_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
+                self.local_plan, self.local_plan_time = compute_local_plan(self.team, self.local_replan_rname)
                 if self.local_plan is None:
                     rospy.logwarn("LTL Planner: No valid local plan has been found given state change! Try global option")
                     return False
 
             else:
-                rospy.logerr("LTL Planner: \"replanning_local_state_change: \" planning was requested but team model was never built, aborting...")
+                rospy.logerr("LTL Planner: \"replanning_local_state_change: \" planning was requested but team model or previous plan was never built, aborting...")
                 return False
 
         if style == 'Local_ts_update':
-            if self.team:
-                self.team.revise_local_pa(self.trace_dic[self.local_replan_rname])
-                self.local_plan, self.local_plan_time = compute_local_plan(self.team)
+            if self.team and self.plans:
+                self.team.update_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
+                self.team.revise_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
+                self.local_plan, self.local_plan_time = compute_local_plan(self.team, self.local_replan_rname)
                 if self.local_plan is None:
                     rospy.logwarn("LTL Planner: No valid local plan has been found given TS updates! Try global option")
                     return False
             else:
-                rospy.logerr("LTL Planner: \"replanning_local_ts_change: \" planning was requested but team model was never built, aborting...")
+                rospy.logerr("LTL Planner: \"replanning_local_ts_change: \" planning was requested but team model or previous plan was never built, aborting...")
                 return False
 
         return True

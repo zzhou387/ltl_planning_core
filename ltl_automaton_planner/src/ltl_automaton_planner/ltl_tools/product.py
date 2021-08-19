@@ -14,7 +14,7 @@ from networkx import find_cycle, NetworkXNoCycle
 
 class ProdAut(DiGraph):
     def __init__(self, ts, buchi, beta=1000):
-        DiGraph.__init__(self, ts=ts, buchi=buchi, beta=beta, initial=set(), accept=set(), accept_with_cycle = set(), type='ProdAut')
+        DiGraph.__init__(self, ts=ts, buchi=buchi, beta=beta, initial=set(), accept=set(), accept_with_cycle = set(), updated_initial=set(), updated_accept=set(), type='ProdAut')
 
     # Build product automaton of TS and büchi by exploring every node combination and adding edges when required
     def build_full(self):
@@ -126,6 +126,17 @@ class ProdAut(DiGraph):
 
         # Build initial reachable set from initial state
         self.possible_states = set(self.graph['initial'])
+
+
+    def build_updated_initial_accept(self, node_init, buchi_accept):
+        self.graph['updated_initial'] = set()
+        self.graph['updated_accept'] = set()
+        self.graph['updated_initial'].add(node_init)
+
+        #the new accept states can be with any TS states
+        for ts_node in self.graph['ts'].nodes:
+            node_accept = (ts_node, buchi_accept)
+            self.graph['updated_accept'].add(node_accept)
 
     #-----------------------------
     # Build accept product states

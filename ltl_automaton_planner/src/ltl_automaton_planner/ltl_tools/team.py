@@ -87,7 +87,9 @@ class TeamModel(DiGraph):
         self.graph['initials'] = set()
         self.graph['initial'] = set()
 
-    def revise_team(self, trace_dic, old_plan):
+    def revise_team(self, trace_dic, rname, old_run):
+
+
         #For testing
         if len(trace_dic) == len(self.graph['pro_list']):
             init_node = (0, ('r3',), unicode('T0_init'))
@@ -117,12 +119,27 @@ class TeamModel(DiGraph):
             rospy.logerr('Number of trace does not match the number of robots')
 
 
-    def revise_local_pa(self, trace_list):
-        buchi_trace = 
-
-
-    def update_local_pa(self, trace_list):
+    def revise_local_pa(self, trace_dic, rname, old_run):
         self.add_edge()
+
+
+    def update_local_pa(self, trace_dic, rname, old_run):
+        local_pa_plan = old_run.state_sequence[rname]
+        local_ts_trace = trace_dic[rname]
+        #zip will stop after one list runs out
+        #double check the trace is satisfying the plan
+        for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace[:-1]):
+            name, ts, buchi = self.projection(pa_plan)
+            assert name == rname
+            assert ts == ts_trace
+
+        changed_ts = local_ts_trace[-1]
+        name, plan_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])
+        new_pa_node = (changed_ts, current_buchi)
+
+        #Local PA goal is the same
+        name, final_ts, final_buchi = self.projection(local_pa_plan[-1])
+        self.graph['pro_list'][rname].build_updated_initial_accept(new_pa_node, final_buchi)
 
 
     def projection(self, team_node):
