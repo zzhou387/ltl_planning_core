@@ -12,8 +12,12 @@ node_cost = G[1][2]['cost']
 # print(G.number_of_nodes())
 # print(G[1][2]['cost'])
 
-DG = nx.DiGraph()
+DG = nx.DiGraph(test_name="aaa")
 DG.add_weighted_edges_from([('1', 'jj', 0.5), ('3', '1', 0.75)])
+all_nodes = list(DG.nodes)
+DG.remove_nodes_from(all_nodes)
+all_edges = list(DG.edges)
+DG.remove_edges_from(all_edges)
 DG2 = nx.DiGraph()
 DG2.add_weighted_edges_from([('1', 'pp', 0.5), ('lo', '1', 0.75)])
 team = nx.union(DG, DG2, rename=('G-','H-'))

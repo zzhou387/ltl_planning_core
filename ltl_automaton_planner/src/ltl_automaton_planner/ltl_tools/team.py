@@ -5,7 +5,7 @@ from networkx.classes.digraph import DiGraph
 
 class TeamModel(DiGraph):
     def __init__(self, product_list, decomposition_set):
-        DiGraph.__init__(self, pro_list=product_list, decomposition_set=decomposition_set, initials=set(), initial=set(), accept=set())
+        DiGraph.__init__(self, pro_list=product_list, decomposition_set=decomposition_set, ts_initials=set(), initial=set(), accept=set())
 
     def build_team(self):
         # append the robot number into the current nodes
@@ -15,12 +15,14 @@ class TeamModel(DiGraph):
                 ts_node = prod.nodes[node]['ts']
                 buchi_node = prod.nodes[node]['buchi']
                 team_node = (idx, ts_node, buchi_node)
+                # buchi doesn't have to be initial for all the agents
+                ts_initial = (idx, ts_node)
                 if not self.has_node(team_node):
                     self.add_node(team_node, rname=idx, ts=ts_node, buchi=buchi_node, label=ts_node)
 
-                    if (prod.nodes[node]['ts'] in prod.graph['ts'].graph['initial']) and (prod.nodes[node]['buchi'] in prod.graph['buchi'].graph['initial']):
-                        self.graph['initials'].add(team_node)
-                        if idx == 0:
+                    if ts_node in prod.graph['ts'].graph['initial']:
+                        self.graph['ts_initials'].add(ts_initial)
+                        if idx == 0 and (buchi_node in prod.graph['buchi'].graph['initial']):
                             self.graph['initial'].add(team_node)
 
                     if prod.nodes[node]['buchi'] in prod.graph['buchi'].graph['accept']:
@@ -30,12 +32,14 @@ class TeamModel(DiGraph):
                     ts_node_suc = prod.nodes[suc]['ts']
                     buchi_node_suc = prod.nodes[suc]['buchi']
                     team_node_suc = (idx, ts_node_suc, buchi_node_suc)
+                    # buchi doesn't have to be initial for all the agents
+                    ts_initial_suc = (idx, ts_node_suc)
                     if not self.has_node(team_node_suc):
                         self.add_node(team_node_suc, rname=idx, ts=ts_node_suc, buchi=buchi_node_suc, label=ts_node_suc)
 
-                        if (prod.nodes[suc]['ts'] in prod.graph['ts'].graph['initial']) and (prod.nodes[suc]['buchi'] in prod.graph['buchi'].graph['initial']):
-                            self.graph['initials'].add(team_node_suc)
-                            if idx == 0:
+                        if ts_node_suc in prod.graph['ts'].graph['initial']:
+                            self.graph['ts_initials'].add(ts_initial_suc)
+                            if idx == 0 and (prod.nodes[suc]['buchi'] in prod.graph['buchi'].graph['initial']):
                                 self.graph['initial'].add(team_node_suc)
 
                         if prod.nodes[suc]['buchi'] in prod.graph['buchi'].graph['accept']:
@@ -45,6 +49,13 @@ class TeamModel(DiGraph):
                     action = prod.graph['ts'][ts_node][ts_node_suc]['action']
                     self.add_edge(team_node, team_node_suc, transition_cost=cost, action=action, weight=cost)
 
+        self.add_switch_transition()
+
+        rospy.loginfo('Decomposition finished: buchi automation contains %d decomposable states' %(len(self.graph['decomposition_set'])))
+        rospy.loginfo('LTL Planner Multi Robot: full team model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
+
+
+    def add_switch_transition(self):
         # Add switch transition between different robots
         for node in self.nodes:
             if self.nodes[node]['rname'] == len(self.graph['pro_list'])-1:
@@ -53,7 +64,7 @@ class TeamModel(DiGraph):
             if self.nodes[node]['buchi'] in self.graph['decomposition_set']:
                 next_rname = self.nodes[node]['rname'] + 1
                 next_ts_state = None
-                for next_team_init in self.graph['initials']:
+                for next_team_init in self.graph['ts_initials']:
                     if next_team_init[0] == next_rname:
                         next_ts_state = next_team_init[1]
 
@@ -77,18 +88,61 @@ class TeamModel(DiGraph):
                 self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
 
 
+    def remove_switch_transition(self):
+        # Remove switch transition between different robots
+        remove_list = list()
+        for node in self.nodes:
+            if self.nodes[node]['rname'] == len(self.graph['pro_list'])-1:
+                continue
 
-        rospy.loginfo('Decomposition finished: buchi automation contains %d decomposable states' %(len(self.graph['decomposition_set'])))
-        rospy.loginfo('LTL Planner Multi Robot: full team model constructed with %d states and %s transitions' %(len(self.nodes()), len(self.edges())))
+            if self.nodes[node]['buchi'] in self.graph['decomposition_set']:
+                next_rname = self.nodes[node]['rname'] + 1
+                next_ts_state = None
+                for next_team_init in self.graph['ts_initials']:
+                    if next_team_init[0] == next_rname:
+                        next_ts_state = next_team_init[1]
+
+                if next_ts_state == None:
+                    raise AssertionError()
+
+                next_buchi_state = self.nodes[node]['buchi']
+                next_node = (next_rname, next_ts_state, next_buchi_state)
+
+                remove_tuple = (node, next_node)
+                remove_list.append(remove_tuple)
+
+        self.remove_edges_from(remove_list)
 
 
-    def build_initial(self):
+    def build_team_initial(self):
         #After synchronization the initial states need to be updated
-        self.graph['initials'] = set()
+        self.graph['ts_initials'] = set()
         self.graph['initial'] = set()
+
 
     def revise_team(self, trace_dic, rname, old_run):
         assert len(trace_dic) == len(self.graph['pro_list'])
+        for id in range(len(trace_dic)):
+            # build new initials for team model
+            new_ts_init = trace_dic[id][-1]
+            try:
+                self.graph['pro_list'].graph['ts'].set_initial(new_ts_init)
+            except:
+                rospy.logerr('Failed to set initial ts')
+
+        # remove all nodes and edges but keep the graph attributes
+        all_nodes = list(self.nodes)
+        self.remove_nodes_from(all_nodes)
+        all_edges = list(self.edges)
+        self.remove_edges_from(all_edges)
+
+        # rebuild the team model given new initials and updated PAs
+        self.graph['ts_initials'] = set()
+        self.graph['initial'] = set()
+        self.graph['accept'] = set()
+        self.build_team()
+
+        # add synchronized transitions to record the task status
         for name in range(len(trace_dic)):
             ts_trace = trace_dic[name]
             pa_plan = old_run.state_sequence[name]
@@ -107,7 +161,7 @@ class TeamModel(DiGraph):
             for ts_node in self.graph['pro_list'][name].graph['ts'].nodes:
                 init_team_node = (name, ts_node, init_buchi)
                 curr_team_node = (name, ts_node, curr_buchi)
-                self.add_edge(init_buchi, curr_buchi, transition_cost=0, action='synchronized_transition', weight=0)
+                self.add_edge(init_team_node, curr_team_node, transition_cost=0, action='synchronized_transition', weight=0)
 
         # for name, list in trace_dic.item():
         #     init_node = (name, )
@@ -141,8 +195,60 @@ class TeamModel(DiGraph):
         #     rospy.logerr('Number of trace does not match the number of robots')
 
 
-    def revise_local_pa(self, trace_dic, rname, old_run):
-        self.add_edge()
+    def revise_local_pa(self, trace_dic, rname, old_run, update_info):
+        self.update_local_pa(trace_dic, rname, old_run)
+        local_pa = self.graph['pro_list'][rname]
+        added_pairs = update_info["added"]
+        deleted_pairs = update_info["deleted"]
+        relabel_states = update_info["relabel"]
+        # add transition
+        for added_pair in added_pairs:
+            for pa_node in local_pa.nodes:
+                ts_node, bu_node = local_pa.projection(pa_node)
+                if ts_node == added_pair[0]:
+                    label = local_pa.graph['ts'].nodes[ts_node]['label']
+                    for bu_succ in local_pa.graph['buchi'].successors(bu_node):
+                        guard = local_pa.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                        if guard.check(label):
+                            self.add_edge((ts_node, bu_node), (added_pair[1], bu_succ), transition_cost=0, action='added_transition', weight=0)
+                            local_pa.graph['ts'][ts_node][added_pair[1]]['weight'] = 0   #TBD
+                            local_pa.graph['ts'][ts_node][added_pair[1]]['action'] = 'added_transition'
+
+        # remove transition
+        remove_list = list()
+        for deleted_pair in deleted_pairs:
+            for pa_node in local_pa.nodes:
+                ts_node, bu_node = local_pa.projection(pa_node)
+                if ts_node == deleted_pair[0]:
+                    label = local_pa.graph['ts'].nodes[ts_node]['label']
+                    for bu_succ in local_pa.graph['buchi'].successors(bu_node):
+                        guard = local_pa.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                        if guard.check(label):
+                            remove_list.append(((ts_node, bu_node), (deleted_pair[1], bu_succ)))
+        local_pa.remove_edges_from(remove_list)
+
+        # relabel
+        remove_list_relabel = list()
+        for relabel_state in relabel_states:
+            for ts_pre in local_pa.graph['ts'].predecessors(relabel_state[1]):
+                for pa_node in local_pa.nodes:
+                    ts_node, bu_node = local_pa.projection(pa_node)
+                    if ts_node == ts_pre:
+                        for bu_succ in local_pa.graph['buchi'].successors(bu_node):
+                            guard = local_pa.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                            if guard.check(relabel_state[0]):
+                                self.add_edge((ts_node, bu_node), (relabel_state[1], bu_succ), transition_cost=0, action='added_transition', weight=0)
+                                local_pa.graph['ts'][ts_node][relabel_state[1]]['weight'] = 0   #TBD
+                                local_pa.graph['ts'][ts_node][relabel_state[1]]['action'] = 'relabeled_transition'
+
+                for pa_node in local_pa.nodes:
+                    ts_node, bu_node = local_pa.projection(pa_node)
+                    if ts_node == ts_pre:
+                        for bu_succ in local_pa.graph['buchi'].successors(bu_node):
+                            guard = local_pa.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                            if not guard.check(relabel_state[0]):
+                                remove_list_relabel.append(((ts_node, bu_node), (relabel_state[1], bu_succ)))
+        local_pa.remove_edges_from(remove_list_relabel)
 
 
     def update_local_pa(self, trace_dic, rname, old_run):

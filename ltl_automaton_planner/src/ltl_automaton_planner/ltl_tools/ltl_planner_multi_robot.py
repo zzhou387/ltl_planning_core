@@ -74,8 +74,7 @@ class LTLPlanner_MultiRobot(object):
 
         if style == 'Local_ts_update':
             if self.team and self.plans:
-                self.team.update_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
-                self.team.revise_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
+                self.team.revise_local_pa(self.trace_dic, self.local_replan_rname, self.plans, self.update_info)
                 self.local_plan, self.local_plan_time = compute_local_plan(self.team, self.local_replan_rname)
                 if self.local_plan is None:
                     rospy.logwarn("LTL Planner: No valid local plan has been found given TS updates! Try global option")
