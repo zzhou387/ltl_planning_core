@@ -26,6 +26,7 @@ from networkx.drawing.nx_agraph import to_agraph
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
 from dynamic_reconfigure.server import Server as DRServer
 from ltl_automaton_planner.cfg import LTLAutomatonDPConfig
+from ltl_automation_a1.srv import LTLTrace
 
 
 def show_automaton(automaton_graph):
@@ -158,18 +159,12 @@ class MultiRobot_Planner(object):
         # self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        # self.trace_sub_1 = rospy.Subscriber('/openshelf_0/ltl_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
-        # self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ltl_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
-
-        # Initialize publisher to send plan commands
-        # self.plan_pub = rospy.Publisher('next_move_cmd', std_msgs.msg.String, queue_size=1, latch=True)
-
-        # Initialize task replanning service
-        # self.trap_srv = rospy.Service('replanning', TaskPlanning, self.task_replanning_callback)
+        self.trace_sub_1 = rospy.Subscriber('/openshelf_0/ltl_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
+        self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ltl_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
 
         # Subscribe to the replanning status
-        # self.replan_sub_1 = rospy.Subscriber('/openshelf_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
-        # self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
+        self.replan_sub_1 = rospy.Subscriber('/openshelf_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
+        self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
 
 
     def ltl_replan_callback_1(self, msg):
@@ -186,7 +181,14 @@ class MultiRobot_Planner(object):
                 rospy.logerr("LTL planner: local replan rname is not empty")
 
             #TODO: Add ros service for requesting the synchronization
-            while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
+            service_1 = rospy.ServiceProxy('/openshelf_0/synchronization_service', LTLTrace)
+            service_1(request=1)
+            service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
+            service_2(request=1)
+
+
+            while (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0) and \
+                (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0):
                 rospy.logwarn('Waiting for the trace callback from agent 1')
 
             if self.ltl_planner_multi_robot.replan_level_1():
