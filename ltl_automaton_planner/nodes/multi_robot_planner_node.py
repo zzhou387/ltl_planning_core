@@ -188,8 +188,8 @@ class MultiRobot_Planner(object):
 
 
             while (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0) and \
-                (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0):
-                rospy.logwarn('Waiting for the trace callback from agent 1')
+                  (len(self.ltl_planner_multi_robot.trace_dic[1]) == 0):
+                rospy.logwarn('Waiting for the trace callback from all agents')
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
