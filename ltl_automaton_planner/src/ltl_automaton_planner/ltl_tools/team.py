@@ -126,7 +126,7 @@ class TeamModel(DiGraph):
             # build new initials for team model
             new_ts_init = trace_dic[id][-1]
             try:
-                self.graph['pro_list'].graph['ts'].set_initial(new_ts_init)
+                self.graph['pro_list'][id].graph['ts'].set_initial(new_ts_init)
             except:
                 rospy.logerr('Failed to set initial ts')
 

@@ -187,7 +187,7 @@ class MultiRobot_Planner(object):
             service_2(request=1)
 
 
-            while (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0) and \
+            while (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0) or \
                   (len(self.ltl_planner_multi_robot.trace_dic[1]) == 0):
                 rospy.logwarn('Waiting for the trace callback from all agents')
 
@@ -197,7 +197,7 @@ class MultiRobot_Planner(object):
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
         if(replan_status == 2):
-            rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change')
+            rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 1')
             # Replan
             if self.ltl_planner_multi_robot.local_replan_rname is not None:
                 self.ltl_planner_multi_robot.local_replan_rname = 0
@@ -220,7 +220,7 @@ class MultiRobot_Planner(object):
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
         if(replan_status == 3):
-            rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change')
+            rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change from agent 1')
             # Replan
             if self.ltl_planner_multi_robot.local_replan_rname is not None:
                 self.ltl_planner_multi_robot.local_replan_rname = 0
@@ -256,8 +256,15 @@ class MultiRobot_Planner(object):
                 rospy.logerr("LTL planner: local replan rname is not empty")
             #Replan
             #TODO: Add ros service for requesting the synchronization
-            while len(self.ltl_planner_multi_robot.trace_dic[1]) == 0:
-                rospy.logwarn('Waiting for the trace callback from agent 2')
+            service_1 = rospy.ServiceProxy('/openshelf_0/synchronization_service', LTLTrace)
+            service_1(request=1)
+            service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
+            service_2(request=1)
+
+
+            while (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0) or \
+                    (len(self.ltl_planner_multi_robot.trace_dic[1]) == 0):
+                rospy.logwarn('Waiting for the trace callback from all agents')
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
@@ -265,7 +272,7 @@ class MultiRobot_Planner(object):
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
         if(replan_status == 2):
-            rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change')
+            rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 2')
             # Replan
             if self.ltl_planner_multi_robot.local_replan_rname is not None:
                 self.ltl_planner_multi_robot.local_replan_rname = 1
@@ -288,7 +295,7 @@ class MultiRobot_Planner(object):
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
         if(replan_status == 3):
-            rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change')
+            rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change from agent 2')
             # Replan
             if self.ltl_planner_multi_robot.local_replan_rname is not None:
                 self.ltl_planner_multi_robot.local_replan_rname = 1
