@@ -270,6 +270,14 @@ class TeamModel(DiGraph):
         self.graph['pro_list'][rname].build_updated_initial_accept(new_pa_node, final_buchi)
 
 
+    def find_deleted_malfunction(self, trace_dic, rname):
+        failed_ts_state = trace_dic[rname][-1]
+        deleted_set = set()
+        for suc_ts in self.graph['pro_list'][rname].graph['ts'].successors(failed_ts_state):
+            deleted_set.add((failed_ts_state, suc_ts))
+        return deleted_set
+
+
     def projection(self, team_node):
         rname = self.nodes[team_node]['rname']
         ts_node = self.nodes[team_node]['ts']

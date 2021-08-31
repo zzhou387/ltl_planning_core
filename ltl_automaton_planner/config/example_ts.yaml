@@ -133,6 +133,10 @@ actions:
         type: "stay"
         guard: "1"
         weight: 0
+    synchronized_transition:
+        type: "synchronized_transition"
+        guard: "1"
+        weight: 0
 #                  pick:
 #                      type: "turtlebot_pick"
 #                      guard: "r2"

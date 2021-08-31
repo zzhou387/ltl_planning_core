@@ -23,6 +23,7 @@ class LTLPlanner_MultiRobot(object):
         self.traj = [] # record the full trajectory
         self.ts_info = None
         self.local_replan_rname = None
+        self.update_info = {}
 
         self.beta = beta                    # importance of taking soft task into account
         self.gamma = gamma                  # cost ratio between prefix and suffix
@@ -88,6 +89,12 @@ class LTLPlanner_MultiRobot(object):
 
     def replan_level_1(self):
         #Directly do global reallocation because of malfunction
+        #Remove the edges related to the malfunction agent
+        self.update_info["added"] = set()
+        self.update_info["relabel"] = set()
+        self.update_info["deleted"] = self.team.find_deleted_malfunction(self.trace_dic, self.local_replan_rname)
+
+        self.team.revise_local_pa(self.trace_dic, self.local_replan_rname, self.plans, self.update_info)
         return self.task_allocate(style="Global")
 
     def replan_level_2(self):

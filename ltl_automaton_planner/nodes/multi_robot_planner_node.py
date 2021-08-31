@@ -195,6 +195,7 @@ class MultiRobot_Planner(object):
                 self.publish_plan_initial()
                 self.ltl_planner_multi_robot.trace_dic = {}
                 self.ltl_planner_multi_robot.local_replan_rname = None
+                self.ltl_planner_multi_robot.update_info = {}
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 1')
@@ -241,6 +242,7 @@ class MultiRobot_Planner(object):
                     self.ltl_planner_multi_robot.trace_dic = {}
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
+                self.ltl_planner_multi_robot.update_info = {}
 
 
     def ltl_replan_callback_2(self, msg):
@@ -270,6 +272,7 @@ class MultiRobot_Planner(object):
                 self.publish_plan_initial()
                 self.ltl_planner_multi_robot.trace_dic = {}
                 self.ltl_planner_multi_robot.local_replan_rname = None
+                self.ltl_planner_multi_robot.update_info = {}
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 2')
