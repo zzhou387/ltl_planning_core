@@ -225,14 +225,18 @@ class ProdAut_Run(object):
     # prefix, suffix in product run
     # prefix: init --> accept, suffix accept --> accept
     # line, loop in ts
-    def __init__(self, product, prefix, precost, suffix, sufcost, totalcost):
+    def __init__(self, product, prefix, precost, suffix=None, sufcost=None, totalcost=None):
         self.prefix = prefix
         self.precost = precost
         self.suffix = suffix
         self.sufcost = sufcost
         self.totalcost = totalcost
         #self.prod_run_to_prod_edges(product)
-        self.plan_output(product)
+        if suffix is None:
+            self.plan_output_finite(product)
+        else:
+            self.plan_output(product)
+
 
     def prod_run_to_prod_edges(self):
         self.pre_prod_edges = zip(self.prefix[0:-1], self.prefix[1:])
@@ -243,6 +247,23 @@ class ProdAut_Run(object):
         # loop: g, b, c, d, e, f, g
         # suf_plan: act_b, act_c, act_d.., act_g
         
+    def plan_output_finite(self, product):
+        self.action_sequence = list()
+        self.ts_state_sequence = list()
+
+        # Collect the nodes of the TS associated with the prefix plan
+        self.ts_state_sequence = [product.nodes[node]['ts'] for node in self.prefix]
+
+        # Collect prefix nodes in list of tuples e.g. [ (prefix_node_1, prefix_node_2), (prefix_node_2, prefix_node_3), ..., (prefix_node_n-1, prefix_node_n)]
+        self.pre_ts_edges = zip(self.ts_state_sequence[0:-1], self.ts_state_sequence[1:])
+
+        # Iterate over the nodes associated with the prefix (see pre_ts_edges)
+        for ts_edge in self.pre_ts_edges:
+
+            # Extract 'action' label between the two consecutive TS nodes of the prefix plan and add it to the pre_plan
+            self.action_sequence.append(product.graph['ts'][ts_edge[0]][ts_edge[1]]['action'])
+
+        rospy.loginfo('LTL Planner: New local action plan: ' + str(self.action_sequence))
 
     def plan_output(self, product):
 

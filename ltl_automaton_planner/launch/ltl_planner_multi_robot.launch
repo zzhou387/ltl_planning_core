@@ -15,10 +15,10 @@
   <rosparam command="load" file="$(find ltl_automaton_planner)/config/example_ltl_formula.yaml" />
 
   <!-- Transition system for mobile robot-->
-  <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts.yaml" />
+  <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_delivery.yaml" />
 
   <!-- Transition system for quadruped-->
-  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_dog.yaml" />
+  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_delivery.yaml" />
 
   <!-- Run planner node -->
 <!--   <node name="ltl_planner" pkg="ltl_automaton_planner" type="multi_robot_planner_node.py" output="screen"> -->

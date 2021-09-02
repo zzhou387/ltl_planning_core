@@ -1,6 +1,7 @@
 import rospy
 from ltl_automaton_planner.ltl_tools.discrete_plan import compute_path_from_pre
 from ltl_automaton_planner.ltl_tools.team import Team_Run
+from ltl_automaton_planner.ltl_tools.product import ProdAut_Run
 import networkx as nx
 import time
 
@@ -26,7 +27,7 @@ def compute_team_plans(team):
     if runs:
         plan, plan_cost = min(runs.values(), key=lambda p: p[1])
         run = Team_Run(team, plan, plan_cost)
-        rospy.logdebug('Dijkstra team search done within %.2fs: cumulated cost' %(time.time()-start))
+        rospy.logdebug('Dijkstra team search done within %.2fs' %(time.time()-start))
         return run, time.time()-start
 
     rospy.logerr('No accepting run found in optimal planning!')
@@ -53,9 +54,27 @@ def compute_local_plan(team, rname):
 
     if runs:
         plan, plan_cost = min(runs.values(), key=lambda p: p[1])
-        run = Team_Run(team, plan, plan_cost)
-        rospy.logdebug('Dijkstra local PA search done within %.2fs: cumulated cost' %(time.time()-start))
+        run = ProdAut_Run(curr_prod, plan, plan_cost)
+        rospy.logdebug('Dijkstra local PA search done within %.2fs' %(time.time()-start))
         return run, time.time()-start
 
     # rospy.logerr('No accepting run found in optimal planning!')
+    return None, None
+
+def find_reusable_plan(team, rname, old_run):
+    start = time.time()
+    local_pa_plan = old_run.state_sequence[rname]
+    curr_prod = team.graph['prod_list'][rname]
+    updated_init = curr_prod.graph['updated_initial']
+    new_local_plan = list()
+    for i in range(len(local_pa_plan)):
+        if updated_init == local_pa_plan[i]:
+            new_local_plan = local_pa_plan[i:]
+            rospy.logdebug('Reusable path found within %.2fs' %(time.time()-start))
+            break
+
+    if len(new_local_plan) != 0:
+        run = ProdAut_Run(curr_prod, new_local_plan, 0)  # cost is hardcoded for now since not used
+        return run, time.time()-start
+
     return None, None

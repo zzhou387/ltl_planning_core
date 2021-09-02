@@ -3,7 +3,7 @@ from ltl_automaton_planner.ltl_tools.team import TeamModel
 from ltl_automaton_planner.ltl_tools.product import ProdAut
 from ltl_automaton_planner.ltl_tools.buchi import mission_to_buchi
 from ltl_automaton_planner.ltl_tools.decomposition_set import get_decomposition_set
-from ltl_automaton_planner.ltl_tools.graph_search_team import compute_team_plans, compute_local_plan
+from ltl_automaton_planner.ltl_tools.graph_search_team import compute_team_plans, compute_local_plan, find_reusable_plan
 from ltl_automation_a1.srv import LTLTrace
 
 class LTLPlanner_MultiRobot(object):
@@ -56,7 +56,7 @@ class LTLPlanner_MultiRobot(object):
                 self.team.revise_team(self.trace_dic, self.local_replan_rname, self.plans)
                 self.plans, plan_time = compute_team_plans(self.team)
                 if self.plans is None:
-                    rospy.logerr("LTL Planner: No valid reallocation plan has been found!")
+                    rospy.logerr("LTL Planner: No valid global reallocation plan has been found!")
                     return False
             else:
                 rospy.logerr("LTL Planner: \"replanning_global: \" planning was requested but team model or previous plan was never built, aborting...")
@@ -65,6 +65,10 @@ class LTLPlanner_MultiRobot(object):
         if style == 'Local_state_change':
             if self.team and self.plans:
                 self.team.update_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
+                self.local_plan, self.local_plan_time = find_reusable_plan(self.team, self.local_replan_rname, self.plans)
+                if self.local_plan is None:
+                    rospy.logwarn("LTL Planner: Reusable path not found; Try local replanning")
+
                 self.local_plan, self.local_plan_time = compute_local_plan(self.team, self.local_replan_rname)
                 if self.local_plan is None:
                     rospy.logwarn("LTL Planner: No valid local plan has been found given state change! Try global option")

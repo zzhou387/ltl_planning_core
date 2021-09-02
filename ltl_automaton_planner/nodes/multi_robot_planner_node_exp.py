@@ -81,11 +81,11 @@ class MultiRobot_Planner(object):
         # Transition system
         #-------------------
         # Get TS from param
-        transition_system_mobile_textfile = rospy.get_param('transition_system_mobile_textfile')
-        self.transition_system_mobile = import_ts_from_file(transition_system_mobile_textfile)
+        transition_system_delivery_textfile = rospy.get_param('transition_system_delivery_textfile')
+        self.transition_system_delivery = import_ts_from_file(transition_system_delivery_textfile)
 
-        transition_system_quadruped_textfile = rospy.get_param('transition_system_quadruped_textfile')
-        self.transition_system_quadruped = import_ts_from_file(transition_system_quadruped_textfile)
+        transition_system_training_textfile = rospy.get_param('transition_system_training_textfile')
+        self.transition_system_training = import_ts_from_file(transition_system_training_textfile)
         #print(self.transition_system)
 
         # Parameter if initial TS is set from agent callback or from TS config file
@@ -128,13 +128,13 @@ class MultiRobot_Planner(object):
 
     def build_automaton(self):
         # Import state models from TS
-        state_models_mobile = state_models_from_ts(self.transition_system_mobile, self.initial_state_ts_dict)
-        state_models_quadruped = state_models_from_ts(self.transition_system_quadruped, self.initial_state_ts_dict)
+        state_models_delivery = state_models_from_ts(self.transition_system_delivery, self.initial_state_ts_dict)
+        state_models_training = state_models_from_ts(self.transition_system_training, self.initial_state_ts_dict)
 
         # Here we take the product of each element of state_models to define the full TS
-        self.robot_model_mobile = TSModel(state_models_mobile)
-        self.robot_model_quadruped = TSModel(state_models_quadruped)
-        self.ts_list = [self.robot_model_mobile, self.robot_model_quadruped]
+        self.robot_model_delivery = TSModel(state_models_delivery)
+        self.robot_model_training = TSModel(state_models_training)
+        self.ts_list = [self.robot_model_delivery, self.robot_model_training]
 
         self.ltl_planner_multi_robot = LTLPlanner_MultiRobot(self.ts_list, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         self.ltl_planner_multi_robot.task_allocate()
@@ -188,7 +188,7 @@ class MultiRobot_Planner(object):
 
 
             while (len(self.ltl_planner_multi_robot.trace_dic[0]) == 0) or \
-                  (len(self.ltl_planner_multi_robot.trace_dic[1]) == 0):
+                    (len(self.ltl_planner_multi_robot.trace_dic[1]) == 0):
                 rospy.logwarn('Waiting for the trace callback from all agents')
 
             if self.ltl_planner_multi_robot.replan_level_1():
@@ -211,7 +211,7 @@ class MultiRobot_Planner(object):
             level_flag, success = self.ltl_planner_multi_robot.replan_level_2()
             if success:
                 if level_flag=="Local":
-                    self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    self.publish_local()
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
 
                 if level_flag=="Global":
@@ -234,7 +234,7 @@ class MultiRobot_Planner(object):
             level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
             if success:
                 if level_flag=="Local":
-                    self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    self.publish_local()
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
 
                 if level_flag=="Global":
@@ -288,7 +288,7 @@ class MultiRobot_Planner(object):
             level_flag, success = self.ltl_planner_multi_robot.replan_level_2()
             if success:
                 if level_flag == "Local":
-                    self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    self.publish_local()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
 
                 if level_flag == "Global":
@@ -311,7 +311,7 @@ class MultiRobot_Planner(object):
             level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
             if success:
                 if level_flag=="Local":
-                    self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    self.publish_local()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
 
                 if level_flag=="Global":
@@ -440,38 +440,8 @@ class MultiRobot_Planner(object):
                     self.plan_pub_2.publish(plan_2_msg)
 
 
-    def publish_local(self, rname):
-        # If plan exists
-        if self.ltl_planner_multi_robot.local_plan is not None:
-            # Prefix plan
-            #-------------
-            plan_local_msg = LTLPlan()
-            plan_local_msg.header.stamp = rospy.Time.now()
-            plan_local_status = False
-
-            plan_local_msg.action_sequence = self.ltl_planner_multi_robot.local_plan.action_sequence
-
-            for ts_state in self.ltl_planner_multi_robot.local_plan.ts_state_sequence:
-                ts_state_msg = TransitionSystemState()
-                ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list_initial[rname].graph['ts'].graph['ts_state_format'] for item in sublist]
-                # If TS state is more than 1 dimension (is a tuple)
-                if type(ts_state) is tuple:
-                    ts_state_msg.states = list(ts_state)
-                # Else state is a single string
-                else:
-                    ts_state_msg.states = [ts_state]
-                # Add to plan TS state sequence
-                plan_local_msg.ts_state_sequence.append(ts_state_msg)
-
-            # Publish
-            if rname == 0:
-                self.plan_pub_1.publish(plan_local_msg)
-            elif rname == 1:
-                self.plan_pub_2.publish(plan_local_msg)
-            else:
-                rospy.logerr("LTL Planner: rname in local publisher doesn't match!")
-                return False
-
+    def publish_local(self):
+        #TODO
         return True
 
 
