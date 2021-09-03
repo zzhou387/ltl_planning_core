@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region", "DR_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "r1"
+    initial: "c1"
     nodes:
       r1:
         attr:
@@ -22,7 +22,7 @@ state_models:
           hysteresis: 0.05
         connected_to:
           r1: "stay"
-          c1: "goto_c2"
+          c1: "goto_c1"
       r2:
         attr:
           type: "square"
@@ -208,16 +208,16 @@ state_models:
           c9: "stay"
           r8: "goto_r8"
           r10: "goto_r10"
-    A1_load:
-      ts_type: "A1_load"
-      initial: "unloaded"
-      nodes:
-        unloaded:
-          connected_to:
-            loaded: "pick"
-        loaded:
-          connected_to:
-            unloaded: "drop"
+  DR_load:
+    ts_type: "DR_load"
+    initial: "unloaded"
+    nodes:
+      unloaded:
+        connected_to:
+          loaded: "pick"
+      loaded:
+        connected_to:
+          unloaded: "drop"
 
 actions:
   goto_r1:
@@ -346,6 +346,13 @@ actions:
     attr:
       region: c8
       pose: [ [ -22,27.7,0 ], [ 0,0,0,1 ] ]
+  goto_c9:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: c9
+      pose: [ [ -22,35.7,0 ], [ 0,0,0,1 ] ]
   stay:
     type: "stay"
     guard: "1"
