@@ -208,16 +208,16 @@ state_models:
           c9: "stay"
           r8: "goto_r8"
           r10: "goto_r10"
-    DR_load:
-        ts_type: "DR_load"
-        initial: "unloaded"
-        nodes:
-            unloaded:
-                connected_to:
-                    loaded: "pick"
-            loaded:
-                connected_to:
-                    unloaded: "drop"
+    A1_load:
+      ts_type: "A1_load"
+      initial: "unloaded"
+      nodes:
+        unloaded:
+          connected_to:
+            loaded: "pick"
+        loaded:
+          connected_to:
+            unloaded: "drop"
 
 actions:
   goto_r1:
@@ -362,13 +362,5 @@ actions:
     type: "drop"
     guard: "1"
     weight: 10
-#                  pick:
-#                      type: "turtlebot_pick"
-#                      guard: "r2"
-#                      weight: 10
-#                  drop:
-#                      type: "turtlebot_drop"
-#                      guard: "r2"
-#                    weight: 10
 
 

@@ -196,7 +196,7 @@ class TeamModel(DiGraph):
 
 
     def revise_local_pa(self, trace_dic, rname, old_run, update_info):
-        self.update_local_pa(trace_dic, rname, old_run)
+        self.update_local_pa(trace_dic, rname, old_run, checkLast=True)
         local_pa = self.graph['pro_list'][rname]
         added_pairs = update_info["added"]
         deleted_pairs = update_info["deleted"]
@@ -251,15 +251,24 @@ class TeamModel(DiGraph):
         local_pa.remove_edges_from(remove_list_relabel)
 
 
-    def update_local_pa(self, trace_dic, rname, old_run):
+    def update_local_pa(self, trace_dic, rname, old_run, checkLast=False):
         local_pa_plan = old_run.state_sequence[rname]
         local_ts_trace = trace_dic[rname]
         #zip will stop after one list runs out
         #double check the trace is satisfying the plan
-        for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace[:-1]):
-            name, ts, buchi = self.projection(pa_plan)
-            assert name == rname
-            assert ts == ts_trace
+
+        if checkLast:
+            for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace):
+                name, ts, buchi = self.projection(pa_plan)
+                assert name == rname
+                assert ts == ts_trace
+
+        else:
+            for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace[:-1]):
+                name, ts, buchi = self.projection(pa_plan)
+                assert name == rname
+                assert ts == ts_trace
+
 
         changed_ts = local_ts_trace[-1]
         name, plan_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])

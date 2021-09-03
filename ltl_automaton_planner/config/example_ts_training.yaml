@@ -208,8 +208,8 @@ state_models:
           c9: "stay"
           r8: "goto_r8"
           r10: "goto_r10"
-    DR_load:
-      ts_type: "DR_load"
+    Wassi_load:
+      ts_type: "Wassi_load"
       initial: "unloaded"
       nodes:
         unloaded:
@@ -355,11 +355,11 @@ actions:
     guard: "1"
     weight: 0
   pick:
-    type: "DR_pick"
+    type: "pick"
     guard: "r3"
     weight: 10
   drop:
-    type: "DR_drop"
+    type: "drop"
     guard: "1"
     weight: 10
 
