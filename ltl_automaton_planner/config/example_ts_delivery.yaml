@@ -360,10 +360,10 @@ actions:
   synchronized_transition:
     type: "synchronized_transition"
     guard: "1"
-    weight: 0
+    weight: 0.01
   pick:
     type: "pick"
-    guard: "r3"
+    guard: "r1"
     weight: 10
   drop:
     type: "drop"

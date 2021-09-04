@@ -30,17 +30,17 @@ from ltl_automation_a1.srv import LTLTrace
 
 
 def show_automaton(automaton_graph):
-    pos=nx.circular_layout(automaton_graph)
-    nx.draw(automaton_graph, pos)
-    nx.draw_networkx_labels(automaton_graph, pos)
-    edge_labels = nx.get_edge_attributes(automaton_graph, 'action')
-    nx.draw_networkx_edge_labels(automaton_graph, pos, edge_labels = edge_labels)
-    plt.show()
-    # automaton_graph.graph['edge'] = {'arrowsize': '0.6', 'splines': 'curved'}
-    # A = to_agraph(automaton_graph)
-    # A.layout('dot')
-    # A.draw('team.png')
+    # pos=nx.circular_layout(automaton_graph)
+    # nx.draw(automaton_graph, pos)
+    # nx.draw_networkx_labels(automaton_graph, pos)
+    # edge_labels = nx.get_edge_attributes(automaton_graph, 'action')
+    # nx.draw_networkx_edge_labels(automaton_graph, pos, edge_labels = edge_labels)
     # plt.show()
+    automaton_graph.graph['edge'] = {'arrowsize': '0.6', 'splines': 'curved'}
+    A = to_agraph(automaton_graph)
+    A.layout('dot')
+    A.draw('team.png')
+    plt.show()
     return
 
 class MultiRobot_Planner(object):
@@ -145,7 +145,7 @@ class MultiRobot_Planner(object):
         # self.ltl_planner.posb_runs = set([(n,) for n in self.ltl_planner.product.graph['initial']])
 
         # show_automaton(self.robot_model)
-        # show_automaton(self.ltl_planner.product.graph['buchi'])
+        show_automaton(self.ltl_planner_multi_robot.buchi)
         # show_automaton(self.ltl_planner.product)
         # show_automaton(self.ltl_planner_multi_robot.team)
 
