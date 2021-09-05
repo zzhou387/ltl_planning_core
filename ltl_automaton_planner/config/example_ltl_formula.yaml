@@ -6,5 +6,5 @@
 #hard_task: "<>s1 && <>s2 && <>s3 && <>s4 && <>s5 && [](s->e) && [](e->!a)"
 #hard_task: "<>(r1 && <>(r2 && <>r3)) && <>r4"
 #hard_task: "<>r1 && <>r2 && <>r3 && <>r4"
-hard_task: "<>(r2 && unloaded) && []((!r2 && X r2) -> loaded) && <>(r3 && unloaded) && []((!r3 && X r3) -> loaded)"
+hard_task: "<>(r4 && unloaded) && []((!r4 && X r4) -> loaded) && <>(r5 && unloaded) && []((!r5 && X r5) -> loaded)"
 soft_task: ""

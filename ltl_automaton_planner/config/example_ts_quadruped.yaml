@@ -8,11 +8,11 @@
 #   turtlebot_load
 
 #state_dim: ["2d_pose_region", "turtlebot_load"]
-state_dim: ["2d_pose_region", "DR_load"]
+state_dim: ["2d_pose_region", "A1_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "c1"
+    initial: "r2"
     nodes:
       r1:
         attr:
@@ -208,8 +208,8 @@ state_models:
           c9: "stay"
           r8: "goto_r8"
           r10: "goto_r10"
-  DR_load:
-    ts_type: "DR_load"
+  A1_load:
+    ts_type: "A1_load"
     initial: "unloaded"
     nodes:
       unloaded:
@@ -363,7 +363,7 @@ actions:
     weight: 0
   pick:
     type: "pick"
-    guard: "r1"
+    guard: "r2"
     weight: 10
   drop:
     type: "drop"

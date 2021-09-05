@@ -18,7 +18,7 @@
   <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_delivery.yaml" />
 
   <!-- Transition system for quadruped-->
-  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_delivery.yaml" />
+  <param name="transition_system_quadruped_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/example_ts_quadruped.yaml" />
 
   <!-- Run planner node -->
 <!--   <node name="ltl_planner" pkg="ltl_automaton_planner" type="multi_robot_planner_node.py" output="screen"> -->

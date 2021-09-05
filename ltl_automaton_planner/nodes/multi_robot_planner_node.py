@@ -327,6 +327,7 @@ class MultiRobot_Planner(object):
             # Update previously received timestamp
             self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
             self.ltl_planner_multi_robot.trace_dic[0] = list()
+            self.ltl_planner_multi_robot.local_replan_rname = 0
 
             for state_msg in msg.ts_state_sequence:
                 state = handle_ts_state_msg(state_msg)

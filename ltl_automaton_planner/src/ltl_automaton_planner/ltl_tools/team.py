@@ -287,6 +287,15 @@ class TeamModel(DiGraph):
         return deleted_set
 
 
+    def find_deleted_ts_update(self, trace_dic, rname, old_plan):
+        deleted_set = set()
+        local_ts_trace = trace_dic[rname]
+        name, ts_next, buchi_next = self.projection(old_plan.state_sequence[rname][len(local_ts_trace)])
+        ts_curr = trace_dic[rname][-1]
+        deleted_set.add((ts_curr, ts_next))
+        return deleted_set
+
+
     def projection(self, team_node):
         rname = self.nodes[team_node]['rname']
         ts_node = self.nodes[team_node]['ts']

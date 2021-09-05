@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region", "DR_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "c2"
+    initial: "r1"
     nodes:
       r1:
         attr:

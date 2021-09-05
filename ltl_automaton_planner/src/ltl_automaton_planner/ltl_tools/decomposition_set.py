@@ -2,6 +2,7 @@ import rospy
 import networkx as nx
 from networkx.algorithms.simple_paths import is_simple_path, _all_simple_paths_graph, _all_simple_paths_multigraph
 from networkx.classes.digraph import DiGraph
+from ltl_automaton_planner.ltl_tools.buchi import check_label_for_buchi_edge
 
 
 def get_decomposition_set(buchi):

@@ -124,6 +124,11 @@ class LTLPlanner_MultiRobot(object):
 
 
     def replan_level_3(self):
+        #Update the TS info
+        self.update_info["added"] = set()
+        self.update_info["relabel"] = set()
+        self.update_info["deleted"] = self.team.find_deleted_ts_update(self.trace_dic, self.local_replan_rname, self.plans)
+
         #Try local replanning first
         if self.task_allocate(style="Local_ts_update"):
             return "Local", True

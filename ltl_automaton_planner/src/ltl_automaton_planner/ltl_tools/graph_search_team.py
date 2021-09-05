@@ -37,7 +37,7 @@ def compute_local_plan(team, rname):
     start = time.time()
     plans = {}
     runs = {}
-    curr_prod = team.graph['prod_list'][rname]
+    curr_prod = team.graph['pro_list'][rname]
     updated_init = curr_prod.graph['updated_initial']
     updated_accept = curr_prod.graph['updated_accept']
     for t_init in updated_init:
@@ -64,7 +64,7 @@ def compute_local_plan(team, rname):
 def find_reusable_plan(team, rname, old_run):
     start = time.time()
     local_pa_plan = old_run.state_sequence[rname]
-    curr_prod = team.graph['prod_list'][rname]
+    curr_prod = team.graph['pro_list'][rname]
     updated_init = curr_prod.graph['updated_initial']
     new_local_plan = list()
     for i in range(len(local_pa_plan)):
