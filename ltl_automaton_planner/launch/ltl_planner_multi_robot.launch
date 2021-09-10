@@ -27,8 +27,8 @@
 
   <!-- Run the gazebo world-->
   <include file="$(find unitree_bringup)/launch/gazebo.launch">
-    <arg name="world_name" value="mrdc"/>
-    <arg name="world_format" value="model"/>
+    <arg name="world_name" value="hospital"/>
+    <arg name="world_format" value="world"/>
   </include>
 
   <include file="$(find ltl_automation_a1)/launch/openshelf_monitor_bt.launch">
