@@ -158,10 +158,11 @@ class TeamModel(DiGraph):
                 assert plan_ts == paused_ts
 
             name00, initi_ts, init_buchi = self.projection(pa_plan[0])
-            for ts_node in self.graph['pro_list'][name].graph['ts'].nodes:
-                init_team_node = (name, ts_node, init_buchi)
-                curr_team_node = (name, ts_node, curr_buchi)
-                self.add_edge(init_team_node, curr_team_node, transition_cost=0, action='synchronized_transition', weight=0)
+            for n_ in range(len(trace_dic)):
+                for ts_node in self.graph['pro_list'][n_].graph['ts'].nodes:
+                    init_team_node = (n_, ts_node, init_buchi)
+                    curr_team_node = (n_, ts_node, curr_buchi)
+                    self.add_edge(init_team_node, curr_team_node, transition_cost=0, action='synchronized_transition', weight=0)
 
         # for name, list in trace_dic.item():
         #     init_node = (name, )
