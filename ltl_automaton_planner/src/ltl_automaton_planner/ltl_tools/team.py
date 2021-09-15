@@ -85,7 +85,7 @@ class TeamModel(DiGraph):
                 #     rospy.logwarn('No self-transition at: ')
                 #     print(next_buchi_state)
 
-                self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
+                self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=-50)
 
 
     def remove_switch_transition(self):

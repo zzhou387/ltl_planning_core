@@ -6,7 +6,7 @@ from ltl_automaton_planner.ltl_tools.decomposition_set import get_decomposition_
 from ltl_automaton_planner.ltl_tools.graph_search_team import compute_team_plans, compute_local_plan, find_reusable_plan
 from ltl_automation_a1.srv import LTLTrace
 
-class LTLPlanner_MultiRobot(object):
+class LTLPlanner_MultiRobot_Exp(object):
     def __init__(self, ts, hard_spec, soft_spec, beta=1000, gamma=10):
         self.hard_spec = hard_spec
         self.soft_spec = soft_spec
@@ -20,6 +20,9 @@ class LTLPlanner_MultiRobot(object):
         self.buchi = None
         self.decomposition_set = set()
         self.trace_dic = {} # record the regions been visited
+        self.trace_dic[0] = list()
+        self.trace_dic[1] = list()
+        self.trace_dic[2] = list()
         self.traj = [] # record the full trajectory
         self.ts_info = None
         self.local_replan_rname = None
@@ -108,13 +111,16 @@ class LTLPlanner_MultiRobot(object):
             return "Local", True
 
         #TODO: Add ros service for requesting the synchronization
-        service_1 = rospy.ServiceProxy('/openshelf_0/synchronization_service', LTLTrace)
+        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
         service_2(request=1)
+        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
+        service_3(request=1)
 
         while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0):
+                (len(self.trace_dic[1]) == 0) and \
+                (len(self.trace_dic[2]) == 0):
             rospy.logwarn('Waiting for the trace callback from all agents')
 
         if self.task_allocate(style="Global"):
@@ -136,13 +142,16 @@ class LTLPlanner_MultiRobot(object):
             return "Local", True
 
         #TODO: Add ros service for requesting the synchronization
-        service_1 = rospy.ServiceProxy('/openshelf_0/synchronization_service', LTLTrace)
+        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
         service_2(request=1)
+        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
+        service_3(request=1)
 
         while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0):
+                (len(self.trace_dic[1]) == 0) and \
+                (len(self.trace_dic[2]) == 0):
             rospy.logwarn('Waiting for the trace callback from all agents')
 
         if self.task_allocate(style="Global"):

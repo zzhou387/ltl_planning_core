@@ -8,11 +8,11 @@
 #   turtlebot_load
 
 #state_dim: ["2d_pose_region", "turtlebot_load"]
-state_dim: ["2d_pose_region", "A1_load"]
+state_dim: ["2d_pose_region", "Wassi_state"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "w2"
+    initial: "p2"
     nodes:
       p1:
         attr:
@@ -242,21 +242,17 @@ state_models:
         connected_to:
           c8: "goto_c8_from_s1"
           s1: "stay"
-
-  A1_load:
-    ts_type: "A1_load"
+  Wassi_state:
+    ts_type: "Wassi_state"
     initial: "standby"
     nodes:
       standby:
         connected_to:
-          loaded: "pick"
           training: "start_training"
-      loaded:
-        connected_to:
-          standby: "drop"
       training:
         connected_to:
           standby: "terminate_training"
+
 actions:
   goto_p1_from_c1:
     type: "move"
@@ -616,14 +612,6 @@ actions:
     type: "stay"
     guard: "1"
     weight: 0
-  pick:
-    type: "pick"
-    guard: "s1"
-    weight: 10
-  drop:
-    type: "drop"
-    guard: "1"
-    weight: 10
   start_training:
     type: "start_training"
     guard: "c1"

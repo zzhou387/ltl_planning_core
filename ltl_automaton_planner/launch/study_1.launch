@@ -5,7 +5,7 @@
 <!--   <arg name="num_mobile" default=1/> -->
 <!--   <arg name="num_quadruped" default=1/> -->
 
-  <arg name="agent_name_mobile_1" default="openshelf_0"/>
+  <arg name="agent_name_mobile_1" default="dr_0"/>
 <!--  <arg name="agent_name_mobile_2" default="openshelf_1"/>-->
   <arg name="agent_name_dog_1" default="a1_gazebo"/>
   <arg name="rviz" default="true"/>
@@ -13,6 +13,9 @@
 <!--   <param name="agent_name" type="string" value="$(arg agent_name)" /> -->
   <!-- hard and soft task parameters -->
   <rosparam command="load" file="$(find ltl_automaton_planner)/config/ltl_formula_final_1.yaml" />
+
+  <!-- Transition system for mobile robot-->
+  <param name="transition_system_mobile_1_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_delivery.yaml" />
 
   <!-- Transition system for mobile robot-->
   <param name="transition_system_mobile_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_delivery.yaml" />
@@ -27,22 +30,22 @@
 
   <!-- Run the gazebo world-->
   <include file="$(find unitree_bringup)/launch/gazebo.launch">
-    <arg name="world_name" value="hospital"/>
+    <arg name="world_name" value="hospital_2"/>
     <arg name="world_format" value="world"/>
   </include>
 
-  <include file="$(find ltl_automation_a1)/launch/openshelf_monitor_bt.launch">
+  <include file="$(find ltl_automation_a1)/launch/dr_monitor_bt.launch">
     <arg name="agent_name" value="$(arg agent_name_mobile_1)" />
     <arg name="plan_name" value="/action_plan_1" />
-    <arg name="pose_x" value="2.0" />
-    <arg name="pose_y" value="0.0" />
+    <arg name="pose_x" value="-21" />
+    <arg name="pose_y" value="29.4" />
   </include>
 
   <include file="$(find ltl_automation_a1)/launch/a1_monitor_bt.launch">
     <arg name="agent_name" value="$(arg agent_name_dog_1)" />
     <arg name="plan_name" value="/action_plan_2" />
-    <arg name="pose_x" value="1.0" />
-    <arg name="pose_y" value="7.0" />
+    <arg name="pose_x" value="-8.2" />
+    <arg name="pose_y" value="29.0" />
     <arg name="init_yaw" value="3.14" />
   </include>
 

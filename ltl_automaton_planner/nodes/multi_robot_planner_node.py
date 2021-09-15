@@ -159,11 +159,11 @@ class MultiRobot_Planner(object):
         # self.possible_states_pub = rospy.Publisher('possible_ltl_states', LTLStateArray, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
-        self.trace_sub_1 = rospy.Subscriber('/openshelf_0/ltl_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
+        self.trace_sub_1 = rospy.Subscriber('/dr_0/ltl_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
         self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ltl_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
 
         # Subscribe to the replanning status
-        self.replan_sub_1 = rospy.Subscriber('/openshelf_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
+        self.replan_sub_1 = rospy.Subscriber('/dr_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
         self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
 
 
@@ -181,7 +181,7 @@ class MultiRobot_Planner(object):
                 rospy.logerr("LTL planner: local replan rname is not empty")
 
             #TODO: Add ros service for requesting the synchronization
-            service_1 = rospy.ServiceProxy('/openshelf_0/synchronization_service', LTLTrace)
+            service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
             service_1(request=1)
             service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
             service_2(request=1)
@@ -258,7 +258,7 @@ class MultiRobot_Planner(object):
                 rospy.logerr("LTL planner: local replan rname is not empty")
             #Replan
             #TODO: Add ros service for requesting the synchronization
-            service_1 = rospy.ServiceProxy('/openshelf_0/synchronization_service', LTLTrace)
+            service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
             service_1(request=1)
             service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
             service_2(request=1)
