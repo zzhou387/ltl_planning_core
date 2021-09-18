@@ -85,7 +85,7 @@ class TeamModel(DiGraph):
                 #     rospy.logwarn('No self-transition at: ')
                 #     print(next_buchi_state)
 
-                self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=-50)
+                self.add_edge(node, next_node, transition_cost=0, action='switch_transition', weight=0)
 
 
     def remove_switch_transition(self):
@@ -143,7 +143,7 @@ class TeamModel(DiGraph):
         self.build_team()
 
         # add synchronized transitions to record the task status
-        for name in range(len(trace_dic)):
+        for name in range(len(old_run.state_sequence)):
             ts_trace = trace_dic[name]
             pa_plan = old_run.state_sequence[name]
             for ts, pa in zip(ts_trace[:-1], pa_plan):

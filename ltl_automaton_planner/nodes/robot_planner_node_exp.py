@@ -5,6 +5,7 @@ import rospy
 import sys
 import importlib
 import yaml
+import time
 
 from copy import deepcopy
 
@@ -168,12 +169,12 @@ class MultiRobot_Planner_Exp(object):
         # Initialize subscriber to provide current state of robot
         self.trace_sub_1 = rospy.Subscriber('/dr_0/ltl_trace', LTLPlan, self.ts_trace_callback_1, queue_size=1)
         self.trace_sub_2 = rospy.Subscriber('/a1_gazebo/ltl_trace', LTLPlan, self.ts_trace_callback_2, queue_size=1)
-        self.trace_sub_1 = rospy.Subscriber('/wassi_0/ltl_trace', LTLPlan, self.ts_trace_callback_3, queue_size=1)
+        self.trace_sub_3 = rospy.Subscriber('/wassi_0/ltl_trace', LTLPlan, self.ts_trace_callback_3, queue_size=1)
 
         # Subscribe to the replanning status
         self.replan_sub_1 = rospy.Subscriber('/dr_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
         self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
-        self.replan_sub_1 = rospy.Subscriber('/wassi_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
+        self.replan_sub_3 = rospy.Subscriber('/wassi_0/replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_3, queue_size=1)
 
     def ltl_replan_callback_1(self, msg):
         replan_status = msg.data
@@ -182,11 +183,13 @@ class MultiRobot_Planner_Exp(object):
 
         if(replan_status == 1):
             rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 1')
+            start = time.time()
             #Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 0
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 0
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             #TODO: Add ros service for requesting the synchronization
             service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
@@ -203,6 +206,7 @@ class MultiRobot_Planner_Exp(object):
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
+                rospy.logwarn('Replanning level 1 done within %.2fs' %(time.time()-start))
                 self.ltl_planner_multi_robot.trace_dic = {}
                 self.ltl_planner_multi_robot.trace_dic[0] = list()
                 self.ltl_planner_multi_robot.trace_dic[1] = list()
@@ -213,10 +217,12 @@ class MultiRobot_Planner_Exp(object):
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 1')
             # Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 0
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            start = time.time()
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 0
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
                 rospy.logwarn('Waiting for the trace callback from agent 1')
@@ -225,10 +231,12 @@ class MultiRobot_Planner_Exp(object):
             if success:
                 if level_flag=="Local":
                     self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    rospy.logwarn('Replanning level 2 local done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
@@ -239,10 +247,12 @@ class MultiRobot_Planner_Exp(object):
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change from agent 1')
             # Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 0
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            start = time.time()
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 0
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
                 rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
@@ -251,10 +261,12 @@ class MultiRobot_Planner_Exp(object):
             if success:
                 if level_flag=="Local":
                     self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    rospy.logwarn('Replanning level 3 local done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
@@ -271,11 +283,13 @@ class MultiRobot_Planner_Exp(object):
 
         if(replan_status == 1):
             rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 2')
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 1
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 1
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
             #Replan
+            start = time.time()
             #TODO: Add ros service for requesting the synchronization
             service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
             service_1(request=1)
@@ -292,17 +306,23 @@ class MultiRobot_Planner_Exp(object):
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
+                rospy.logwarn('Replanning level 1 done within %.2fs' %(time.time()-start))
                 self.ltl_planner_multi_robot.trace_dic = {}
+                self.ltl_planner_multi_robot.trace_dic[0] = list()
+                self.ltl_planner_multi_robot.trace_dic[1] = list()
+                self.ltl_planner_multi_robot.trace_dic[2] = list()
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 2')
             # Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 1
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            start = time.time()
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 1
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             while len(self.ltl_planner_multi_robot.trace_dic[1]) == 0:
                 rospy.logwarn('Waiting for the trace callback from agent 2')
@@ -311,11 +331,13 @@ class MultiRobot_Planner_Exp(object):
             if success:
                 if level_flag == "Local":
                     self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    rospy.logwarn('Replanning level 2 local done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
 
                 if level_flag == "Global":
                     self.publish_plan_initial()
                     self.ltl_planner_multi_robot.trace_dic = {}
+                    rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
                     self.ltl_planner_multi_robot.trace_dic[2] = list()
@@ -325,10 +347,12 @@ class MultiRobot_Planner_Exp(object):
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change from agent 2')
             # Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 1
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            start = time.time()
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 1
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             while len(self.ltl_planner_multi_robot.trace_dic[1]) == 0:
                 rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 2')
@@ -337,10 +361,12 @@ class MultiRobot_Planner_Exp(object):
             if success:
                 if level_flag=="Local":
                     self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    rospy.logwarn('Replanning level 3 local done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
@@ -356,11 +382,13 @@ class MultiRobot_Planner_Exp(object):
 
         if(replan_status == 1):
             rospy.logwarn('LTL planner: received replanning Level 1; handling malfunction from agent 3')
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 2
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 2
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
             #Replan
+            start = time.time()
             #TODO: Add ros service for requesting the synchronization
             service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
             service_1(request=1)
@@ -377,17 +405,23 @@ class MultiRobot_Planner_Exp(object):
 
             if self.ltl_planner_multi_robot.replan_level_1():
                 self.publish_plan_initial()
+                rospy.logwarn('Replanning level 1 done within %.2fs' %(time.time()-start))
                 self.ltl_planner_multi_robot.trace_dic = {}
+                self.ltl_planner_multi_robot.trace_dic[0] = list()
+                self.ltl_planner_multi_robot.trace_dic[1] = list()
+                self.ltl_planner_multi_robot.trace_dic[2] = list()
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
         if(replan_status == 2):
             rospy.logwarn('LTL planner: received replanning Level 2: handling abrupt state change from agent 3')
             # Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 2
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            start = time.time()
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 2
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             while len(self.ltl_planner_multi_robot.trace_dic[2]) == 0:
                 rospy.logwarn('Waiting for the trace callback from agent 3')
@@ -396,10 +430,12 @@ class MultiRobot_Planner_Exp(object):
             if success:
                 if level_flag == "Local":
                     self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    rospy.logwarn('Replanning level 2 local done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[2] = list()
 
                 if level_flag == "Global":
                     self.publish_plan_initial()
+                    rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
@@ -410,10 +446,12 @@ class MultiRobot_Planner_Exp(object):
         if(replan_status == 3):
             rospy.logwarn('LTL planner: received replanning Level 3: handling transition system change from agent 3')
             # Replan
-            if self.ltl_planner_multi_robot.local_replan_rname is not None:
-                self.ltl_planner_multi_robot.local_replan_rname = 2
-            else:
-                rospy.logerr("LTL planner: local replan rname is not empty")
+            start = time.time()
+            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
+            self.ltl_planner_multi_robot.local_replan_rname = 2
+            rospy.loginfo("LTL planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
+            # else:
+            #     rospy.logerr("LTL planner: local replan rname is not empty")
 
             while len(self.ltl_planner_multi_robot.trace_dic[2]) == 0:
                 rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 3')
@@ -422,10 +460,12 @@ class MultiRobot_Planner_Exp(object):
             if success:
                 if level_flag=="Local":
                     self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
+                    rospy.logwarn('Replanning level 3 local done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic[2] = list()
 
                 if level_flag=="Global":
                     self.publish_plan_initial()
+                    rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
                     self.ltl_planner_multi_robot.trace_dic[0] = list()
                     self.ltl_planner_multi_robot.trace_dic[1] = list()
@@ -440,7 +480,7 @@ class MultiRobot_Planner_Exp(object):
             # Update previously received timestamp
             self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
             self.ltl_planner_multi_robot.trace_dic[0] = list()
-            self.ltl_planner_multi_robot.local_replan_rname = 0
+            # self.ltl_planner_multi_robot.local_replan_rname = 0
 
             for state_msg in msg.ts_state_sequence:
                 state = handle_ts_state_msg(state_msg)
@@ -471,7 +511,7 @@ class MultiRobot_Planner_Exp(object):
             # Update previously received timestamp
             self.prev_received_timestamp_2 = deepcopy(msg.header.stamp)
             self.ltl_planner_multi_robot.trace_dic[1] = list()
-            self.ltl_planner_multi_robot.local_replan_rname = 1
+            # self.ltl_planner_multi_robot.local_replan_rname = 1
 
             for state_msg in msg.ts_state_sequence:
                 state = handle_ts_state_msg(state_msg)
@@ -500,7 +540,7 @@ class MultiRobot_Planner_Exp(object):
             # Update previously received timestamp
             self.prev_received_timestamp_3 = deepcopy(msg.header.stamp)
             self.ltl_planner_multi_robot.trace_dic[2] = list()
-            self.ltl_planner_multi_robot.local_replan_rname = 2
+            # self.ltl_planner_multi_robot.local_replan_rname = 2
 
             for state_msg in msg.ts_state_sequence:
                 state = handle_ts_state_msg(state_msg)
@@ -545,13 +585,13 @@ class MultiRobot_Planner_Exp(object):
             # plan_1_msg.action_sequence = self.ltl_planner.run.pre_plan
             # Go through all TS state in plan and add it as TransitionSystemState message
             for r_idx, act_seq in self.ltl_planner_multi_robot.plans.action_sequence.items():
-                if r_idx==0 and len(act_seq) != 0:
+                if r_idx==0: # and len(act_seq) != 0:
                     plan_1_status = True
                     plan_1_msg.action_sequence = act_seq
-                if r_idx==1 and len(act_seq) != 0:
+                if r_idx==1: # and len(act_seq) != 0:
                     plan_2_status = True
                     plan_2_msg.action_sequence = act_seq
-                if r_idx==2 and len(act_seq) != 0:
+                if r_idx==2: # and len(act_seq) != 0:
                     plan_3_status = True
                     plan_3_msg.action_sequence = act_seq
 

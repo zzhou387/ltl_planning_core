@@ -107,7 +107,7 @@ class LTLPlanner_MultiRobot_Exp(object):
     def replan_level_2(self):
         #Try local replanning first
         if self.task_allocate(style="Local_state_change"):
-            self.plans.state_sequence[self.local_replan_rname] = self.local_plan.prefix
+            self.plans.state_sequence[self.local_replan_rname] = [(self.local_replan_rname, tt[0], tt[1]) for tt in self.local_plan.prefix]
             return "Local", True
 
         #TODO: Add ros service for requesting the synchronization
@@ -138,7 +138,7 @@ class LTLPlanner_MultiRobot_Exp(object):
 
         #Try local replanning first
         if self.task_allocate(style="Local_ts_update"):
-            self.plans.state_sequence[self.local_replan_rname] = self.local_plan.prefix
+            self.plans.state_sequence[self.local_replan_rname] = [(self.local_replan_rname, tt[0], tt[1]) for tt in self.local_plan.prefix]
             return "Local", True
 
         #TODO: Add ros service for requesting the synchronization

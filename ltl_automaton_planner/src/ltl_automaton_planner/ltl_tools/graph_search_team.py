@@ -122,22 +122,29 @@ def compute_team_plans(team):
     runs = {}
     team_init = team.graph['initial']
     team_finals = team.graph['accept']
+    rospy.logwarn('Dijkstra team global search start')
     for t_init in team_init:
-        plan_pre, plan_dist = nx.bellman_ford_predecessor_and_distance(team, t_init)
+        plan_pre, plan_dist = nx.dijkstra_predecessor_and_distance(team, t_init)
         for target in team_finals:
             if target in plan_dist:
                 plans[target] = plan_dist[target]
 
         if plans:
             opti_targ = min(plans, key=plans.get)
+            rospy.logwarn('Debug 2.3')
             plan = compute_path_from_pre(plan_pre, opti_targ)
+            rospy.logwarn('Debug 2.4')
             plan_cost = plan_dist[opti_targ]
             runs[(t_init, opti_targ)] = (plan, plan_cost)
 
+    rospy.logwarn('Debug 3')
     if runs:
+        rospy.logwarn('Debug 4')
         plan, plan_cost = min(runs.values(), key=lambda p: p[1])
+        rospy.logwarn('Debug 5')
         run = Team_Run(team, plan, plan_cost)
-        rospy.logdebug('Dijkstra team search done within %.2fs' %(time.time()-start))
+        rospy.logwarn('Debug 6')
+        rospy.logwarn('Dijkstra team global search done within %.2fs' %(time.time()-start))
         return run, time.time()-start
 
     rospy.logerr('No accepting run found in optimal planning!')
@@ -165,7 +172,7 @@ def compute_local_plan(team, rname):
     if runs:
         plan, plan_cost = min(runs.values(), key=lambda p: p[1])
         run = ProdAut_Run(curr_prod, plan, plan_cost)
-        rospy.logdebug('Dijkstra local PA search done within %.2fs' %(time.time()-start))
+        rospy.logwarn('Dijkstra local PA search done within %.2fs' %(time.time()-start))
         return run, time.time()-start
 
     # rospy.logerr('No accepting run found in optimal planning!')
@@ -180,7 +187,7 @@ def find_reusable_plan(team, rname, old_run):
     for i in range(len(local_pa_plan)):
         if updated_init == local_pa_plan[i]:
             new_local_plan = local_pa_plan[i:]
-            rospy.logdebug('Reusable path found within %.2fs' %(time.time()-start))
+            rospy.logwarn('Reusable path found within %.2fs' %(time.time()-start))
             break
 
     if len(new_local_plan) != 0:
