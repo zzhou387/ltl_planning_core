@@ -131,19 +131,13 @@ def compute_team_plans(team):
 
         if plans:
             opti_targ = min(plans, key=plans.get)
-            rospy.logwarn('Debug 2.3')
             plan = compute_path_from_pre(plan_pre, opti_targ)
-            rospy.logwarn('Debug 2.4')
             plan_cost = plan_dist[opti_targ]
             runs[(t_init, opti_targ)] = (plan, plan_cost)
 
-    rospy.logwarn('Debug 3')
     if runs:
-        rospy.logwarn('Debug 4')
         plan, plan_cost = min(runs.values(), key=lambda p: p[1])
-        rospy.logwarn('Debug 5')
         run = Team_Run(team, plan, plan_cost)
-        rospy.logwarn('Debug 6')
         rospy.logwarn('Dijkstra team global search done within %.2fs' %(time.time()-start))
         return run, time.time()-start
 

@@ -131,7 +131,7 @@ class ProdAut(DiGraph):
     def build_updated_initial_accept(self, node_init, buchi_accept):
         self.graph['updated_initial'] = set()
         self.graph['updated_accept'] = set()
-        self.graph['updated_initial'].add(node_init)
+        self.graph['updated_initial'] = node_init
 
         #the new accept states can be with any TS states
         for ts_node in self.graph['ts'].nodes:

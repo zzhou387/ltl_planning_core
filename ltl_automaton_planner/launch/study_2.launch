@@ -34,6 +34,14 @@
     <arg name="world_format" value="world"/>
   </include>
 
+  <include file="$(find ltl_automation_a1)/launch/wassi_monitor_bt.launch">
+    <arg name="agent_name" value="$(arg agent_name_mobile_2)" />
+    <arg name="plan_name" value="/action_plan_3" />
+    <arg name="pose_x" value="7.0" />
+    <arg name="pose_y" value="6.0" />
+    <arg name="init_yaw" value="3.14" />
+  </include>
+
   <include file="$(find ltl_automation_a1)/launch/dr_monitor_bt.launch">
     <arg name="agent_name" value="$(arg agent_name_mobile_1)" />
     <arg name="plan_name" value="/action_plan_1" />
@@ -47,14 +55,6 @@
     <arg name="plan_name" value="/action_plan_2" />
     <arg name="pose_x" value="-16.58" />
     <arg name="pose_y" value="12.0" />
-    <arg name="init_yaw" value="3.14" />
-  </include>
-
-  <include file="$(find ltl_automation_a1)/launch/wassi_monitor_bt.launch">
-    <arg name="agent_name" value="$(arg agent_name_mobile_2)" />
-    <arg name="plan_name" value="/action_plan_3" />
-    <arg name="pose_x" value="7.0" />
-    <arg name="pose_y" value="6.0" />
     <arg name="init_yaw" value="3.14" />
   </include>
 

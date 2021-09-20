@@ -2,6 +2,7 @@ import rospy
 
 import networkx as nx
 from networkx.classes.digraph import DiGraph
+from ltl_automaton_planner.ltl_tools.buchi import check_label_for_buchi_edge
 
 class TeamModel(DiGraph):
     def __init__(self, product_list, decomposition_set):
@@ -146,23 +147,34 @@ class TeamModel(DiGraph):
         for name in range(len(old_run.state_sequence)):
             ts_trace = trace_dic[name]
             pa_plan = old_run.state_sequence[name]
-            for ts, pa in zip(ts_trace[:-1], pa_plan):
-                name_, ts_, buchi_ = self.projection(pa)
-                assert ts == ts_
-                assert name == name_
+            if len(ts_trace) <= len(pa_plan):
+                for ts, pa in zip(ts_trace[:-1], pa_plan):
+                    name_, ts_, buchi_ = self.projection(pa)
+                    assert ts == ts_
+                    assert name == name_
 
-            paused_ts = ts_trace[-1]
-            name0, plan_ts, curr_buchi = self.projection(pa_plan[len(ts_trace)-1])
-            if name != rname:
-                assert name == name0
-                assert plan_ts == paused_ts
+                paused_ts = ts_trace[-1]
+                name0, plan_ts, curr_buchi = self.projection(pa_plan[len(ts_trace)-1])
+                if name != rname:
+                    assert name == name0
+                    assert plan_ts == paused_ts
+            else:
+                name0, plan_ts, curr_buchi = self.projection(pa_plan[-1])
 
             name00, initi_ts, init_buchi = self.projection(pa_plan[0])
             for n_ in range(len(trace_dic)):
                 for ts_node in self.graph['pro_list'][n_].graph['ts'].nodes:
                     init_team_node = (n_, ts_node, init_buchi)
+                    init_local_pa_node = (ts_node, init_buchi)
                     curr_team_node = (n_, ts_node, curr_buchi)
+                    curr_local_pa_node = (ts_node, curr_buchi)
+
+                    #update team
                     self.add_edge(init_team_node, curr_team_node, transition_cost=0, action='synchronized_transition', weight=0)
+
+                    #update the local PA as well
+                    self.graph['pro_list'][n_].add_edge(init_local_pa_node, curr_local_pa_node, transition_cost=0, action='synchronized_transition', weight=0)
+
 
         # for name, list in trace_dic.item():
         #     init_node = (name, )
@@ -264,20 +276,37 @@ class TeamModel(DiGraph):
                 assert name == rname
                 assert ts == ts_trace
 
+            new_pa_init_set = set()
+            name, current_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])
+            new_pa_init_set.add((current_ts, current_buchi))
+
+            #Local PA goal is the same
+            name, final_ts, final_buchi = self.projection(local_pa_plan[-1])
+            self.graph['pro_list'][rname].build_updated_initial_accept(new_pa_init_set, final_buchi)
+
         else:
             for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace[:-1]):
                 name, ts, buchi = self.projection(pa_plan)
                 assert name == rname
                 assert ts == ts_trace
 
+            new_pa_init_set = set()
+            changed_ts = local_ts_trace[-1]
+            if len(local_ts_trace) == 1:
+                name, current_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])
+                new_pa_init_set.add((changed_ts, current_buchi))
+            else:
+                name, plan_ts, previous_buchi = self.projection(local_pa_plan[len(local_ts_trace)-2])
+                for succ_buchi in self.graph['pro_list'][rname].graph['buchi'].successors(previous_buchi):
+                    label = self.graph['pro_list'][rname].graph['ts'].nodes[plan_ts]['label']
+                    truth, dist = check_label_for_buchi_edge(self.graph['pro_list'][rname].graph['buchi'], label, previous_buchi, succ_buchi)
+                    if truth:
+                        new_pa_init_set.add((changed_ts, succ_buchi))
 
-        changed_ts = local_ts_trace[-1]
-        name, plan_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])
-        new_pa_node = (changed_ts, current_buchi)
+            #Local PA goal is the same
+            name, final_ts, final_buchi = self.projection(local_pa_plan[-1])
+            self.graph['pro_list'][rname].build_updated_initial_accept(new_pa_init_set, final_buchi)
 
-        #Local PA goal is the same
-        name, final_ts, final_buchi = self.projection(local_pa_plan[-1])
-        self.graph['pro_list'][rname].build_updated_initial_accept(new_pa_node, final_buchi)
 
 
     def find_deleted_malfunction(self, trace_dic, rname):
