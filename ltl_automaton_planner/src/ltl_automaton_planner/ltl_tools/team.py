@@ -1,4 +1,5 @@
 import rospy
+import time
 
 import networkx as nx
 from networkx.classes.digraph import DiGraph
@@ -11,6 +12,7 @@ class TeamModel(DiGraph):
     def build_team(self):
         # append the robot number into the current nodes
         # for node in buchi_1.nodes:
+        start = time.time()
         for idx, prod in enumerate(self.graph['pro_list']):
             for node in prod.nodes:
                 ts_node = prod.nodes[node]['ts']
@@ -49,6 +51,8 @@ class TeamModel(DiGraph):
                     cost = prod.graph['ts'][ts_node][ts_node_suc]['weight']
                     action = prod.graph['ts'][ts_node][ts_node_suc]['action']
                     self.add_edge(team_node, team_node_suc, transition_cost=cost, action=action, weight=cost)
+
+        rospy.logwarn('Team construction took %.2fs (can be avoided for global reallocation)' %(time.time()-start))
 
         self.add_switch_transition()
 
