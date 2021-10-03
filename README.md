@@ -1,18 +1,8 @@
-# ltl_automaton_core
+# ltl_planning_core
 
 ## Overview
-This metapackage provides an implementation of a LTL (Linear Temporal Logic) planner based on automaton graph. More information can be found on the [wiki](../../wiki) or in each package documentation.
-
-### Publication
-R. Baran, X. Tan, P. Varnai, P. Yu, S. Ahlberg, M. Guo, W. Shaw Cortez, and D. V. Dimarogonas, "A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks", About to be presented at the IEEE 17th International Conference on Automation Science and Engineering (CASE), 2021. To cite this work:
-```
-@inproceedings{baran2021rosltl,
-  title={A ROS Package for Human-In-the-Loop Planning and Control under Linear Temporal Logic Tasks},
-  author={Robin Baran, Xiao Tan, Peter Varnai, Pian Yu, Sofie Ahlberg, Meng Guo, Wenceslao Shaw Cortez and Dimos V. Dimarogonas},
-  booktitle={IEEE 17th International Conference on Automation Science and Engineering (CASE)},
-  year={2021}
-}
-```
+This repo contains a multi-robot task planner based on LTL (Linear Temporal Logic). An interface to BT (Behavior Tree)
+is also provided. The whole codebase is developed upon a ROS package from [ltl_automaton_core](https://github.com/KTH-SML/ltl_automaton_core).
 
 ## Installation
 
@@ -48,28 +38,30 @@ R. Baran, X. Tan, P. Varnai, P. Yu, S. Ahlberg, M. Guo, W. Shaw Cortez, and D. V
 	`pip3 install pyyaml`
 
 
-### Building
-To build the package, clone the current repository in your catkin workspace and build it.
-```
-cd catkin_ws/src
-git clone https://github.com/KTH-SML/ltl_automaton_core.git
-```
-Build your workspace with either *catkin_make* or *catkin build*
-```
-cd ...
-catkin_make
-```
+[comment]: <> (### Building)
+
+[comment]: <> (To build the package, clone the current repository in your catkin workspace and build it.)
+
+[comment]: <> (```)
+
+[comment]: <> (cd catkin_ws/src)
+
+[comment]: <> (git clone https://github.com/KTH-SML/ltl_automaton_core.git)
+
+[comment]: <> (```)
+
+[comment]: <> (Build your workspace with either *catkin_make* or *catkin build*)
+
+[comment]: <> (```)
+
+[comment]: <> (cd ...)
+
+[comment]: <> (catkin_make)
+
+[comment]: <> (```)
 
 ## Usage
 
-This package is not meant to be used on its own. It provides an LTL planner node that can be interfaced with an external agent package. Nevertheless an example launch file can be run using the following command:
-
-```
-roslaunch ltl_automaton_planner ltl_planner_example.launch
-
-```
-
-It will launch a planner using the formula provided by the config file *ltl_automaton_planner/config/example_ltl_formula* and using the transition system specified in *ltl_automaton_planner/config/example_ts*.
 
 ## Packages
 This metapackage is composed of the following packages.
@@ -79,5 +71,3 @@ This metapackage is composed of the following packages.
 - **[ltl_automaton_msgs](/ltl_automaton_msgs)**: A message definition packages for the LTL automaton packages.
 
 - **[ltl_automaton_std_transition_systems](/ltl_automaton_std_transition_systems)**: A set of state monitors for standard transition systems (2D regions, ...).
-
-- **[ltl_automaton_hil_mic](/ltl_automaton_hil_mic)**: An implementation of a Human-In-the-Loop mix initiative controller for agents using the LTL planner.
