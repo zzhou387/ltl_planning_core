@@ -221,6 +221,109 @@ class ProdAut(DiGraph):
                     new_reachable.add(t_s)
         return new_reachable
 
+
+    #------------------------------------
+    # Update the latest intial and final
+    # state and PA based on execution hi-
+    # -story
+    #------------------------------------
+    def revise_local_pa(self, trace, old_run, update_info):
+        self.update_local_pa(trace, old_run, checkLast=True)
+        added_pairs = update_info["added"]
+        deleted_pairs = update_info["deleted"]
+        relabel_states = update_info["relabel"]
+        # add transition
+        for added_pair in added_pairs:
+            for pa_node in self.nodes:
+                ts_node, bu_node = self.projection(pa_node)
+                if ts_node == added_pair[0]:
+                    label = self.graph['ts'].nodes[ts_node]['label']
+                    for bu_succ in self.graph['buchi'].successors(bu_node):
+                        guard = self.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                        if guard.check(label):
+                            self.add_edge((ts_node, bu_node), (added_pair[1], bu_succ), transition_cost=0, action='added_transition', weight=0)
+                            self.graph['ts'][ts_node][added_pair[1]]['weight'] = 0   #TBD
+                            self.graph['ts'][ts_node][added_pair[1]]['action'] = 'added_transition'
+
+        # remove transition
+        remove_list = list()
+        for deleted_pair in deleted_pairs:
+            for pa_node in self.nodes:
+                ts_node, bu_node = self.projection(pa_node)
+                if ts_node == deleted_pair[0]:
+                    label = self.graph['ts'].nodes[ts_node]['label']
+                    for bu_succ in self.graph['buchi'].successors(bu_node):
+                        guard = self.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                        if guard.check(label):
+                            remove_list.append(((ts_node, bu_node), (deleted_pair[1], bu_succ)))
+        self.remove_edges_from(remove_list)
+
+        # relabel
+        remove_list_relabel = list()
+        for relabel_state in relabel_states:
+            for ts_pre in self.graph['ts'].predecessors(relabel_state[1]):
+                for pa_node in self.nodes:
+                    ts_node, bu_node = self.projection(pa_node)
+                    if ts_node == ts_pre:
+                        for bu_succ in self.graph['buchi'].successors(bu_node):
+                            guard = self.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                            if guard.check(relabel_state[0]):
+                                self.add_edge((ts_node, bu_node), (relabel_state[1], bu_succ), transition_cost=0, action='added_transition', weight=0)
+                                self.graph['ts'][ts_node][relabel_state[1]]['weight'] = 0   #TBD
+                                self.graph['ts'][ts_node][relabel_state[1]]['action'] = 'relabeled_transition'
+
+                for pa_node in self.nodes:
+                    ts_node, bu_node = self.projection(pa_node)
+                    if ts_node == ts_pre:
+                        for bu_succ in self.graph['buchi'].successors(bu_node):
+                            guard = self.graph['buchi'].edges[bu_node, bu_succ]['guard']
+                            if not guard.check(relabel_state[0]):
+                                remove_list_relabel.append(((ts_node, bu_node), (relabel_state[1], bu_succ)))
+        self.remove_edges_from(remove_list_relabel)
+
+
+    def update_local_pa(self, trace, old_run, checkLast=False):
+        local_pa_plan = old_run.ts_state_sequence
+        local_ts_trace = trace
+        #zip will stop after one list runs out
+        #double check the trace is satisfying the plan
+
+        if checkLast:
+            for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace):
+                ts, buchi = self.projection(pa_plan)
+                assert ts == ts_trace
+
+            new_pa_init_set = set()
+            current_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])
+            new_pa_init_set.add((current_ts, current_buchi))
+
+            #Local PA goal is the same
+            final_ts, final_buchi = self.projection(local_pa_plan[-1])
+            self.build_updated_initial_accept(new_pa_init_set, final_buchi)
+
+        else:
+            for pa_plan, ts_trace in zip(local_pa_plan, local_ts_trace[:-1]):
+                ts, buchi = self.projection(pa_plan)
+                assert ts == ts_trace
+
+            new_pa_init_set = set()
+            changed_ts = local_ts_trace[-1]
+            if len(local_ts_trace) == 1:
+                current_ts, current_buchi = self.projection(local_pa_plan[len(local_ts_trace)-1])
+                new_pa_init_set.add((changed_ts, current_buchi))
+            else:
+                plan_ts, previous_buchi = self.projection(local_pa_plan[len(local_ts_trace)-2])
+                for succ_buchi in self.graph['buchi'].successors(previous_buchi):
+                    label = self.graph['ts'].nodes[plan_ts]['label']
+                    truth, dist = check_label_for_buchi_edge(self.graph['buchi'], label, previous_buchi, succ_buchi)
+                    if truth:
+                        new_pa_init_set.add((changed_ts, succ_buchi))
+
+            #Local PA goal is the same
+            final_ts, final_buchi = self.projection(local_pa_plan[-1])
+            self.build_updated_initial_accept(new_pa_init_set, final_buchi)
+
+
 class ProdAut_Run(object):
     # prefix, suffix in product run
     # prefix: init --> accept, suffix accept --> accept

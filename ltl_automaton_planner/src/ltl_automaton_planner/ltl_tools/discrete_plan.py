@@ -271,3 +271,49 @@ def dijkstra_revise_once(product, run_segment, broken_edge_index):
     for (bridge, cost) in dijkstra_targets(product, run_segment[broken_edge_index-1], set([run_segment[-1]])):
         new_run_segment = run_segment[0:(broken_edge_index-1)] + bridge
         return new_run_segment
+
+
+def compute_local_plan_decentral(product):
+    start = time.time()
+    plans = {}
+    runs = {}
+    updated_init = product.graph['updated_initial']
+    updated_accept = product.graph['updated_accept']
+    for t_init in updated_init:
+        plan_pre, plan_dist = dijkstra_predecessor_and_distance(product, t_init)
+        for target in updated_accept:
+            if target in plan_dist:
+                plans[target] = plan_dist[target]
+
+            if plans:
+                opti_targ = min(plans, key=plans.get)
+                plan = compute_path_from_pre(plan_pre, opti_targ)
+                plan_cost = plan_dist[opti_targ]
+                runs[(t_init, opti_targ)] = (plan, plan_cost)
+
+    if runs:
+        plan, plan_cost = min(runs.values(), key=lambda p: p[1])
+        run = ProdAut_Run(product, plan, plan_cost)
+        rospy.logwarn('Dijkstra local PA search done within %.2fs' %(time.time()-start))
+        return run, time.time()-start
+
+    # rospy.logerr('No accepting run found in optimal planning!')
+    return None, None
+
+
+def find_reusable_plan_decentral(product, old_run):
+    start = time.time()
+    local_pa_plan = old_run
+    updated_init = product.graph['updated_initial']
+    new_local_plan = list()
+    for i in range(len(local_pa_plan)):
+        if updated_init == local_pa_plan[i]:
+            new_local_plan = local_pa_plan[i:]
+            rospy.logwarn('Reusable path found within %.2fs' %(time.time()-start))
+            break
+
+    if len(new_local_plan) != 0:
+        run = ProdAut_Run(product, new_local_plan, 0)  # cost is hardcoded for now since not used
+        return run, time.time()-start
+
+    return None, None

@@ -7,7 +7,7 @@ is also provided. The whole codebase is developed upon a ROS package from [ltl_a
 ## Installation
 
 ### Dependencies
-- [Robot Operating System (ROS)](http://wiki.ros.org)(duh), package tested on Kinetic, Melodic and Morenia distributions
+- [Robot Operating System (ROS)](http://wiki.ros.org)(duh), package tested on Melodic and Focal distributions
 
 - [LTL2BA](https://github.com/KTH-DHSG/ros_ltl2ba). ROS package wrapping for the LTL2BA software by Dennis Oddoux and Paul Gastin.
     - Clone the repository from Github in your catkin workspace:
@@ -38,27 +38,22 @@ is also provided. The whole codebase is developed upon a ROS package from [ltl_a
 	`pip3 install pyyaml`
 
 
-[comment]: <> (### Building)
+### Building
+This metapackage is supposed to be used along with other packages. To build the package alone, clone 
+the current repository in your catkin workspace and build it.
 
-[comment]: <> (To build the package, clone the current repository in your catkin workspace and build it.)
+```
+cd catkin_ws/src
+git clone https://github.com/zzhou387/ltl_planning_core.git
+cd ltl_planning core
+git checkout dev
+```
 
-[comment]: <> (```)
-
-[comment]: <> (cd catkin_ws/src)
-
-[comment]: <> (git clone https://github.com/KTH-SML/ltl_automaton_core.git)
-
-[comment]: <> (```)
-
-[comment]: <> (Build your workspace with either *catkin_make* or *catkin build*)
-
-[comment]: <> (```)
-
-[comment]: <> (cd ...)
-
-[comment]: <> (catkin_make)
-
-[comment]: <> (```)
+Build your workspace with either *catkin_make* or *catkin build*
+```
+cd ...
+catkin build / catkin_make
+```
 
 ## Usage
 

@@ -345,24 +345,30 @@ class Team_Run(object):
 
     def plan_output(self, team):
         self.action_sequence = {}
+        self.buchi_sequence = {}
         self.state_sequence = {}
         self.ts_state_sequence = {}
         rname_init = 0
         self.plan_local = list()
         self.ts_plan_local = list()
+        self.buchi_plan_local = list()
         for node in self.team_plan:
             # This is allowable since the order of robot is fixed according to switch transition
             rname, ts_node, buchi_node = team.projection(node)
             if rname > rname_init:
+                self.buchi_sequence[rname-1] = self.buchi_plan_local
                 self.state_sequence[rname-1] = self.plan_local
                 self.ts_state_sequence[rname-1] = self.ts_plan_local
                 self.plan_local = list()
                 self.ts_plan_local = list()
+                self.buchi_plan_local = list()
                 rname_init = rname
             self.plan_local.append(node)
             self.ts_plan_local.append(ts_node)
+            self.buchi_plan_local.append(buchi_node)
         self.state_sequence[rname] = self.plan_local
         self.ts_state_sequence[rname] = self.ts_plan_local
+        self.buchi_sequence[rname] = self.buchi_plan_local
 
         for r_idx, state_seq in self.state_sequence.items():
             team_edges = zip(state_seq[0:-1], state_seq[1:])
