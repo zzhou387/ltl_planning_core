@@ -324,6 +324,23 @@ class ProdAut(DiGraph):
             self.build_updated_initial_accept(new_pa_init_set, final_buchi)
 
 
+    def find_deleted_malfunction(self, trace):
+        failed_ts_state = trace[-1]
+        deleted_set = set()
+        for suc_ts in self.graph['ts'].successors(failed_ts_state):
+            deleted_set.add((failed_ts_state, suc_ts))
+        return deleted_set
+
+
+    def find_deleted_ts_update(self, trace, old_plan):
+        deleted_set = set()
+        local_ts_trace = trace
+        ts_next, buchi_next = self.projection(old_plan.prefix[len(local_ts_trace)])
+        ts_curr = trace[-1]
+        deleted_set.add((ts_curr, ts_next))
+        return deleted_set
+
+
 class ProdAut_Run(object):
     # prefix, suffix in product run
     # prefix: init --> accept, suffix accept --> accept
@@ -353,9 +370,11 @@ class ProdAut_Run(object):
     def plan_output_finite(self, product):
         self.action_sequence = list()
         self.ts_state_sequence = list()
+        self.buchi_state_sequence = list()
 
         # Collect the nodes of the TS associated with the prefix plan
         self.ts_state_sequence = [product.nodes[node]['ts'] for node in self.prefix]
+        self.buchi_state_sequence = [product.nodes[node]['buchi'] for node in self.prefix]
 
         # Collect prefix nodes in list of tuples e.g. [ (prefix_node_1, prefix_node_2), (prefix_node_2, prefix_node_3), ..., (prefix_node_n-1, prefix_node_n)]
         self.pre_ts_edges = zip(self.ts_state_sequence[0:-1], self.ts_state_sequence[1:])

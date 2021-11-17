@@ -20,7 +20,8 @@ import networkx as nx
 from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file, handle_ts_state_msg
 
 # Import LTL automaton message definitions
-from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
+from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray,\
+                                   GlobalReplanInfo, UpdateInfo, TransitionSystemInfo
 from ltl_automaton_msgs.srv import TaskPlanning, TaskPlanningResponse
 from networkx.drawing.nx_agraph import to_agraph
 
@@ -127,7 +128,7 @@ class Local_Planner(object):
         self.plan_pub_ = rospy.Publisher(self.action_topic_name_, LTLPlan, latch=True, queue_size=1)
 
         # Global replanning request publisher (contains: 1) replanning status, 2) TS info, 3) latest local plan)
-        self.global_replan_pub_ = rospy.Publisher(self.global_replanning_topic_name_, LTLPlan, latch=True, queue_size=1)
+        self.global_replan_pub_ = rospy.Publisher(self.global_replanning_topic_name_, GlobalReplanInfo, latch=True, queue_size=1)
 
         # Initialize subscriber to provide current state of robot
         self.trace_sub_ = rospy.Subscriber(self.trace_topic_name_, LTLPlan, self.ts_trace_callback, queue_size=1)
@@ -211,68 +212,57 @@ class Local_Planner(object):
 
         if(replan_status == 1):
             # Do nothing; global planner will handle replanning level 1
+            # Send global replanning request to the global planner (UpdateInfo is handled in global planner for now)
+            self.publish_global_replanning_request(1)
             rospy.logwarn('LTL Local Planner: received replanning Level 1; do nothing; global planner will handle malfunction')
 
         if(replan_status == 2):
             rospy.logwarn('LTL Local Planner: received replanning Level 2: handling abrupt state change from agent 1')
             # Replan
             start = time.time()
-            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
-            self.ltl_planner_local.local_replan_rname = 0
-            rospy.loginfo("LTL Local Planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
-            # else:
-            #     rospy.logerr("LTL Local Planner: local replan rname is not empty")
 
-            while len(self.ltl_planner_local.trace_dic[0]) == 0:
+            while len(self.ltl_planner_local.trace) == 0:
                 rospy.logwarn('Waiting for the trace callback from agent 1')
 
-            level_flag, success = self.ltl_planner_local.replan_level_2()
-            if success:
-                if level_flag=="Local":
-                    self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
-                    rospy.logwarn('Replanning level 2 local done within %.2fs' %(time.time()-start))
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
+            if self.ltl_planner_local.replan_level_2():
+                self.publish_local()
+                rospy.logwarn('Replanning level 2 local done within %.2fs' %(time.time()-start))
+                # Send the new local plan to the global planner
+                self.publish_global_replanning_request(0, self.ltl_planner_local.local_plan.ts_state_sequence,
+                                                       self.ltl_planner_local.local_plan.buchi_state_sequence)
+                self.ltl_planner_local.trace = list()
 
-                if level_flag=="Global":
-                    self.publish_plan_initial()
-                    rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
-                    self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+            else:
+                # Send global replanning request to global planner
+                rospy.logwarn("LTL Local Planner: sending request to global planner for reallocation!")
+                self.publish_global_replanning_request(2)
+                self.ltl_planner_local.trace = list()
 
-                self.ltl_planner_multi_robot.local_replan_rname = None
 
         if(replan_status == 3):
             rospy.logwarn('LTL Local Planner: received replanning Level 3: handling transition system change')
             # Replan
             start = time.time()
-            # if self.ltl_planner_multi_robot.local_replan_rname is not None:
-            self.ltl_planner_multi_robot.local_replan_rname = 0
-            rospy.loginfo("LTL Local Planner: local replan rname is: %d" %self.ltl_planner_multi_robot.local_replan_rname)
-            # else:
-            #     rospy.logerr("LTL Local Planner: local replan rname is not empty")
 
-            while len(self.ltl_planner_multi_robot.trace_dic[0]) == 0:
+            while len(self.ltl_planner_local.trace) == 0:
                 rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
 
-            level_flag, success = self.ltl_planner_multi_robot.replan_level_3()
-            if success:
-                if level_flag=="Local":
-                    self.publish_local(self.ltl_planner_multi_robot.local_replan_rname)
-                    rospy.logwarn('Replanning level 3 local done within %.2fs' %(time.time()-start))
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
+            if self.ltl_planner_local.replan_level_3():
+                self.publish_local()
+                rospy.logwarn('Replanning level 3 local done within %.2fs' %(time.time()-start))
+                # Send the new local plan to the global planner
+                self.publish_global_replanning_request(0, self.ltl_planner_local.local_plan.ts_state_sequence,
+                                                       self.ltl_planner_local.local_plan.buchi_state_sequence,
+                                                       self.ltl_planner_local.update_info)
+                self.ltl_planner_local.trace = list()
+                self.ltl_planner_local.update_info = {}
 
-                if level_flag=="Global":
-                    self.publish_plan_initial()
-                    rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
-                    self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
-
-                self.ltl_planner_multi_robot.local_replan_rname = None
-                self.ltl_planner_multi_robot.update_info = {}
+            else:
+                # Send global replanning request to global planner
+                rospy.logwarn("LTL Local Planner: sending request to global planner for reallocation!")
+                self.publish_global_replanning_request(3, update_info=self.ltl_planner_local.update_info)
+                self.ltl_planner_local.trace = list()
+                self.ltl_planner_local.update_info = {}
 
 
     def publish_local(self):
@@ -302,6 +292,75 @@ class Local_Planner(object):
             self.plan_pub_.publish(plan_local_msg)
 
         return True
+
+
+    # this function handles both plan synchronization and global reallocation request
+    def publish_global_replanning_request(self, replan_level, ts_seq=None, buchi_seq=None, update_info=None):
+        global_replanning_msg = GlobalReplanInfo()
+        global_replanning_msg.header.stamp = rospy.Time.now()
+        global_replanning_msg.level = replan_level
+        if replan_level == 0:
+            # level 0 is for sending successful local plans
+            if ts_seq and buchi_seq:
+                ltl_state_msg = LTLState()
+                for ts_state, buchi_state in zip(ts_seq, buchi_seq):
+                    ts_state_msg = TransitionSystemState()
+                    ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item in sublist]
+                    # If TS state is more than 1 dimension (is a tuple)
+                    if type(ts_state) is tuple:
+                        ts_state_msg.states = list(ts_state)
+                    # Else state is a single string
+                    else:
+                        ts_state_msg.states = [ts_state]
+                    # Add to plan TS state sequence
+                    ltl_state_msg.ts_state = ts_state_msg
+                    ltl_state_msg.buchi_state = buchi_state
+
+                    global_replanning_msg.ltl_states.append(ltl_state_msg)
+
+            else:
+                raise InitError("buchi or TS sequence is empty")
+
+            # TS could change
+            if update_info:
+                update_info_msg = UpdateInfo()
+                for added_pair in list(update_info["added"]):
+                    trans_info_msg = TransitionSystemInfo()
+                    trans_info_msg.ts_pair = list(added_pair)
+                    update_info_msg.added_ts.append(trans_info_msg)
+
+                for relable_pair in list(update_info["relabel"]):
+                    trans_info_msg = TransitionSystemInfo()
+                    trans_info_msg.ts_pair = list(relable_pair)
+                    update_info_msg.relabel_ts.append(trans_info_msg)
+
+                for deleted_pair in list(update_info["deleted"]):
+                    trans_info_msg = TransitionSystemInfo()
+                    trans_info_msg.ts_pair = list(deleted_pair)
+                    update_info_msg.added_ts.append(trans_info_msg)
+
+        else:
+            # the rest cases will require a global reallocation and only UpdateInfo is possibly needed
+            if update_info:
+                update_info_msg = UpdateInfo()
+                for added_pair in list(update_info["added"]):
+                    trans_info_msg = TransitionSystemInfo()
+                    trans_info_msg.ts_pair = list(added_pair)
+                    update_info_msg.added_ts.append(trans_info_msg)
+
+                for relable_pair in list(update_info["relabel"]):
+                    trans_info_msg = TransitionSystemInfo()
+                    trans_info_msg.ts_pair = list(relable_pair)
+                    update_info_msg.relabel_ts.append(trans_info_msg)
+
+                for deleted_pair in list(update_info["deleted"]):
+                    trans_info_msg = TransitionSystemInfo()
+                    trans_info_msg.ts_pair = list(deleted_pair)
+                    update_info_msg.added_ts.append(trans_info_msg)
+
+        self.global_replan_pub_.publish(global_replanning_msg)
+
+
 
 
 #==============================

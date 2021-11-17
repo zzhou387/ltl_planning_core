@@ -20,7 +20,8 @@ import networkx as nx
 from ltl_automaton_planner.ltl_automaton_utilities import state_models_from_ts, import_ts_from_file, handle_ts_state_msg
 
 # Import LTL automaton message definitions
-from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray
+from ltl_automaton_msgs.msg import TransitionSystemStateStamped, TransitionSystemState, LTLPlan, LTLState, LTLStateArray, \
+                                   GlobalReplanInfo, UpdateInfo, TransitionSystemInfo
 from ltl_automaton_msgs.srv import TaskPlanning, TaskPlanningResponse
 from networkx.drawing.nx_agraph import to_agraph
 
@@ -176,9 +177,9 @@ class Central_Planner(object):
         self.trace_sub_3 = rospy.Subscriber('/wassi_0/ltl_trace', LTLPlan, self.ts_trace_callback_3, queue_size=1)
 
         # Subscribe to the replanning status
-        self.replan_sub_1 = rospy.Subscriber('/dr_0/global_replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_1, queue_size=1)
-        self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/global_replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_2, queue_size=1)
-        self.replan_sub_3 = rospy.Subscriber('/wassi_0/global_replanning_request', std_msgs.msg.Int8, self.ltl_replan_callback_3, queue_size=1)
+        self.replan_sub_1 = rospy.Subscriber('/dr_0/global_replanning_request', GlobalReplanInfo, self.ltl_replan_callback_1, queue_size=1)
+        self.replan_sub_2 = rospy.Subscriber('/a1_gazebo/global_replanning_request', GlobalReplanInfo, self.ltl_replan_callback_2, queue_size=1)
+        self.replan_sub_3 = rospy.Subscriber('/wassi_0/global_replanning_request', GlobalReplanInfo, self.ltl_replan_callback_3, queue_size=1)
 
         # # Subscribe to the new local plans
         # self.new_local_plan_sub_1 = rospy.Subscriber('/dr_0/local_planner/new_local_plan', std_msgs.msg.Int8, self.ltl_new_local_callback_1, queue_size=1)
@@ -186,10 +187,12 @@ class Central_Planner(object):
         # self.new_local_plan_sub_3 = rospy.Subscriber('/wassi_0/local_planner/new_local_plan', std_msgs.msg.Int8, self.ltl_new_local_callback_3, queue_size=1)
 
 
-    def ltl_replan_callback_1(self, msg):
-        replan_status = msg.data
+    def ltl_replan_callback_1(self, msg=GlobalReplanInfo()):
+        replan_status = msg.level
         if(replan_status == 0):
-            rospy.logerr('LTL Global Planner: replanning ERROR')
+            rospy.logwarn('LTL Global Planner: local replanning was successful; update team model according to new local plan')
+            if self.ltl_planner_multi_robot.plans:
+                self.ltl_planner_multi_robot.plans
 
         if(replan_status == 1):
             rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction from agent 1')
@@ -592,22 +595,12 @@ class Central_Planner(object):
             plan_3_msg.header.stamp = rospy.Time.now()
             plan_3_status = False
 
-            # plan_1_msg.action_sequence = self.ltl_planner.run.pre_plan
-            # Go through all TS state in plan and add it as TransitionSystemState message
-            for r_idx, act_seq in self.ltl_planner_multi_robot.plans.action_sequence.items():
-                if r_idx==0: # and len(act_seq) != 0:
-                    plan_1_status = True
-                    plan_1_msg.action_sequence = act_seq
-                if r_idx==1: # and len(act_seq) != 0:
-                    plan_2_status = True
-                    plan_2_msg.action_sequence = act_seq
-                if r_idx==2: # and len(act_seq) != 0:
-                    plan_3_status = True
-                    plan_3_msg.action_sequence = act_seq
-
-            for r_idx, stat_seq in self.ltl_planner_multi_robot.plans.ts_state_sequence.items():
-                if r_idx==0 and plan_1_status:
-                    for ts_state in stat_seq:
+            for (r_idx, ts_seq), (r_idx_2, buchi_seq) in zip(self.ltl_planner_multi_robot.plans.ts_state_sequence.items(), \
+                                                             self.ltl_planner_multi_robot.plans.buchi_sequence.items()):
+                assert r_idx == r_idx_2
+                if r_idx == 0:
+                    ltl_state_msg = LTLState()
+                    for ts_state, buchi_state in zip(ts_seq, buchi_seq):
                         ts_state_msg = TransitionSystemState()
                         ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list_initial[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
                         # If TS state is more than 1 dimension (is a tuple)
@@ -617,13 +610,17 @@ class Central_Planner(object):
                         else:
                             ts_state_msg.states = [ts_state]
                         # Add to plan TS state sequence
-                        plan_1_msg.ts_state_sequence.append(ts_state_msg)
+                        ltl_state_msg.ts_state = ts_state_msg
+                        ltl_state_msg.buchi_state = buchi_state
+
+                        plan_1_msg.ltl_states.append(ltl_state_msg)
 
                     # Publish
                     self.plan_pub_1.publish(plan_1_msg)
 
-                if r_idx==1 and plan_2_status:
-                    for ts_state in stat_seq:
+                if r_idx == 1:
+                    ltl_state_msg = LTLState()
+                    for ts_state, buchi_state in zip(ts_seq, buchi_seq):
                         ts_state_msg = TransitionSystemState()
                         ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list_initial[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
                         # If TS state is more than 1 dimension (is a tuple)
@@ -633,13 +630,17 @@ class Central_Planner(object):
                         else:
                             ts_state_msg.states = [ts_state]
                         # Add to plan TS state sequence
-                        plan_2_msg.ts_state_sequence.append(ts_state_msg)
+                        ltl_state_msg.ts_state = ts_state_msg
+                        ltl_state_msg.buchi_state = buchi_state
+
+                        plan_2_msg.ltl_states.append(ltl_state_msg)
 
                     # Publish
                     self.plan_pub_2.publish(plan_2_msg)
 
-                if r_idx==2 and plan_3_status:
-                    for ts_state in stat_seq:
+                if r_idx == 2:
+                    ltl_state_msg = LTLState()
+                    for ts_state, buchi_state in zip(ts_seq, buchi_seq):
                         ts_state_msg = TransitionSystemState()
                         ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_multi_robot.pro_list_initial[r_idx].graph['ts'].graph['ts_state_format'] for item in sublist]
                         # If TS state is more than 1 dimension (is a tuple)
@@ -649,7 +650,10 @@ class Central_Planner(object):
                         else:
                             ts_state_msg.states = [ts_state]
                         # Add to plan TS state sequence
-                        plan_3_msg.ts_state_sequence.append(ts_state_msg)
+                        ltl_state_msg.ts_state = ts_state_msg
+                        ltl_state_msg.buchi_state = buchi_state
+
+                        plan_3_msg.ltl_states.append(ltl_state_msg)
 
                     # Publish
                     self.plan_pub_3.publish(plan_3_msg)

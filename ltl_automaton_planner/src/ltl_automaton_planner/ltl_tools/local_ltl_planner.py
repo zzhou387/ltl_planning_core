@@ -29,7 +29,6 @@ class LocalLTLPlanner(object):
         self.trace = list() # record the TS states been visited
         self.traj = [] # record the full trajectory
         self.ts_info = None
-        self.local_replan_rname = None
         self.update_info = {}
 
         self.beta = beta                    # importance of taking soft task into account
@@ -65,8 +64,7 @@ class LocalLTLPlanner(object):
                     return False
 
             else:
-                rospy.logerr("LTL Local Planner: \"replanning_local_state_change: \" planning was requested but product model or previous plan was never built, aborting...")
-                return False
+                raise InitError("LTL Local Planner: \"replanning_local_state_change: \" planning was requested but product model or previous plan was never built, aborting...")
 
         # Called when there is a TS change
         elif style == 'Local_ts_update':
@@ -77,76 +75,49 @@ class LocalLTLPlanner(object):
                     rospy.logwarn("LTL Local Planner: No valid local plan has been found given TS updates! Try global option")
                     return False
             else:
-                rospy.logerr("LTL Local Planner: \"replanning_local_ts_change: \" planning was requested but product model or previous plan was never built, aborting...")
-                return False
+                raise InitError("LTL Local Planner: \"replanning_local_ts_change: \" planning was requested but product model or previous plan was never built, aborting...")
 
         else:
             raise InitError("LTL Local Planner: local reallocation style is wrong")
 
         return True
 
+    # Not used for now! directly handled by global planner
     def replan_level_1(self):
-        #Directly do global reallocation because of malfunction
-        #Remove the edges related to the malfunction agent
+        # Directly do global reallocation because of malfunction
+        # Remove the edges related to the malfunction agent
         self.update_info["added"] = set()
         self.update_info["relabel"] = set()
-        self.update_info["deleted"] = self.team.find_deleted_malfunction(self.trace_dic, self.local_replan_rname)
+        self.update_info["deleted"] = self.product.find_deleted_malfunction(self.trace)
 
-        self.team.revise_local_pa(self.trace_dic, self.local_replan_rname, self.plans, self.update_info)
-        return self.task_allocate(style="Global")
+        self.product.revise_local_pa(self.trace, self.local_plan, self.update_info)
+        # TODO: send global replanning request to global planner
+        rospy.logwarn("LTL Local Planner: sending request to global planner for reallocation!")
+        return True
 
     def replan_level_2(self):
         #Try local replanning first
         if self.local_task_reallocate(style="Local_state_change"):
-            self.plans.state_sequence[self.local_replan_rname] = [(self.local_replan_rname, tt[0], tt[1]) for tt in self.local_plan.prefix]
-            return "Local", True
+            # self.plans.state_sequence[self.local_replan_rname] = [(self.local_replan_rname, tt[0], tt[1]) for tt in self.local_plan.prefix]
+            return True
 
-        #TODO: Add ros service for requesting the synchronization
-        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
-        service_1(request=1)
-        service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
-        service_2(request=1)
-        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
-        service_3(request=1)
-
-        while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0) and \
-                (len(self.trace_dic[2]) == 0):
-            rospy.logwarn('Waiting for the trace callback from all agents')
-
-        if self.task_allocate(style="Global"):
-            return "Global", True
-
-        rospy.logerr("LTL Local Planner: No valid plan has been found for level 2!")
-        return "Error", False
+        else:
+            # send global replanning request to global planner
+            return False
 
 
     def replan_level_3(self):
         #Update the TS info
         self.update_info["added"] = set()
         self.update_info["relabel"] = set()
-        self.update_info["deleted"] = self.team.find_deleted_ts_update(self.trace_dic, self.local_replan_rname, self.plans)
+        self.update_info["deleted"] = self.product.find_deleted_ts_update(self.trace, self.local_plan)
 
         #Try local replanning first
-        if self.task_allocate(style="Local_ts_update"):
-            self.plans.state_sequence[self.local_replan_rname] = [(self.local_replan_rname, tt[0], tt[1]) for tt in self.local_plan.prefix]
-            return "Local", True
+        if self.local_task_reallocate(style="Local_ts_update"):
+            # TODO: send the new local plan to the global planner
+            # self.plans.state_sequence[self.local_replan_rname] = [(self.local_replan_rname, tt[0], tt[1]) for tt in self.local_plan.prefix]
+            return True
 
-        #TODO: Add ros service for requesting the synchronization
-        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
-        service_1(request=1)
-        service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
-        service_2(request=1)
-        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
-        service_3(request=1)
-
-        while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0) and \
-                (len(self.trace_dic[2]) == 0):
-            rospy.logwarn('Waiting for the trace callback from all agents')
-
-        if self.task_allocate(style="Global"):
-            return "Global", True
-
-        rospy.logerr("LTL Local Planner: No valid plan has been found for level 3!")
-        return "Error", False
+        else:
+            # send global replanning request to global planner
+            return False
