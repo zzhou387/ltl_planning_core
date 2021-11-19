@@ -82,7 +82,7 @@ class LocalLTLPlanner(object):
 
         return True
 
-    # Not used for now! directly handled by global planner
+    # Update the local product automaton before sending global request
     def replan_level_1(self):
         # Directly do global reallocation because of malfunction
         # Remove the edges related to the malfunction agent
@@ -93,7 +93,6 @@ class LocalLTLPlanner(object):
         self.product.revise_local_pa(self.trace, self.local_plan, self.update_info)
         # TODO: send global replanning request to global planner
         rospy.logwarn("LTL Local Planner: sending request to global planner for reallocation!")
-        return True
 
     def replan_level_2(self):
         #Try local replanning first

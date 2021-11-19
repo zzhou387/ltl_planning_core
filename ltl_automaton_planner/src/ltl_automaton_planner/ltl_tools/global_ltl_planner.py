@@ -87,6 +87,16 @@ class GlobalLTLPlanner(object):
 
         return True
 
+    # used for only updating product automaton
+    def update_product(self, has_ts_update):
+        if self.team and self.plans:
+            if has_ts_update:
+                self.team.revise_local_pa(self.trace_dic, self.local_replan_rname, self.plans, self.update_info)
+            else:
+                self.team.update_local_pa(self.trace_dic, self.local_replan_rname, self.plans)
+        else:
+            rospy.logerr("LTL Global Planner: \"replanning_local_ts_change: \" planning was requested but team model or previous plan was never built, aborting...")
+
     def replan_level_1(self):
         # Directly do global reallocation because of malfunction
         # Remove the edges related to the malfunction agent
@@ -95,6 +105,7 @@ class GlobalLTLPlanner(object):
         self.update_info["deleted"] = self.team.find_deleted_malfunction(self.trace_dic, self.local_replan_rname)
 
         # Call ros service for requesting the synchronization
+        self.trace_dic = {}
         service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
@@ -116,6 +127,7 @@ class GlobalLTLPlanner(object):
 
     def replan_level_2(self):
         #Call ros service for requesting the synchronization
+        self.trace_dic = {}
         service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
@@ -136,10 +148,10 @@ class GlobalLTLPlanner(object):
 
 
     def replan_level_3(self):
-        #TODO: replace with receiving messages from local planner
-        self.update_info["added"] = set()
-        self.update_info["relabel"] = set()
-        self.update_info["deleted"] = self.team.find_deleted_ts_update(self.trace_dic, self.local_replan_rname, self.plans)
+        # Receiving messages from local planner
+        # self.update_info["added"] = set()
+        # self.update_info["relabel"] = set()
+        # self.update_info["deleted"] = self.team.find_deleted_ts_update(self.trace_dic, self.local_replan_rname, self.plans)
 
         #Try local replanning first
         # if self.task_allocate(style="Global_ts_update"):
@@ -147,6 +159,7 @@ class GlobalLTLPlanner(object):
         #     return "Local", True
 
         # Call ros service for requesting the synchronization
+        self.trace_dic = {}
         service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)

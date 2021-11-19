@@ -74,4 +74,30 @@ def handle_ts_state_msg(ts_state_msg):
 
     #TODO Add check for message malformed (not corresponding fields)
 
+def handle_update_info_msg(update_info_msg):
+    # Extract Update Info from request message
+    update_info = {}
+    update_info["added"] = set()
+    update_info["relabel"] = set()
+    update_info["deleted"] = set()
+    if len(update_info_msg.added_ts) != 0:
+        for ts_info in update_info_msg.added_ts:
+            ts_state_0 = handle_ts_state_msg(ts_info.ts_pair[0])
+            ts_state_1 = handle_ts_state_msg(ts_info.ts_pair[1])
+            update_info["added"].add((ts_state_0, ts_state_1))
+
+    if len(update_info_msg.relabel_ts) != 0:
+        for ts_info in update_info_msg.relabel_ts:
+            ts_state_0 = handle_ts_state_msg(ts_info.ts_pair[0])
+            ts_state_1 = handle_ts_state_msg(ts_info.ts_pair[1])
+            update_info["relabel"].add((ts_state_0, ts_state_1))
+
+    if len(update_info_msg.deleted_ts) != 0:
+        for ts_info in update_info_msg.deleted_ts:
+            ts_state_0 = handle_ts_state_msg(ts_info.ts_pair[0])
+            ts_state_1 = handle_ts_state_msg(ts_info.ts_pair[1])
+            update_info["deleted"].add((ts_state_0, ts_state_1))
+
+    return update_info
+
 

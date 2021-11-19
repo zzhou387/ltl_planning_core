@@ -213,8 +213,13 @@ class Local_Planner(object):
         if(replan_status == 1):
             # Do nothing; global planner will handle replanning level 1
             # Send global replanning request to the global planner (UpdateInfo is handled in global planner for now)
+            while len(self.ltl_planner_local.trace) == 0:
+                rospy.logwarn('Waiting for the trace callback from current agent')
+
+            self.ltl_planner_local.replan_level_1()
             self.publish_global_replanning_request(1)
             rospy.logwarn('LTL Local Planner: received replanning Level 1; do nothing; global planner will handle malfunction')
+            self.ltl_planner_local.trace = list()
 
         if(replan_status == 2):
             rospy.logwarn('LTL Local Planner: received replanning Level 2: handling abrupt state change from agent 1')
@@ -222,7 +227,7 @@ class Local_Planner(object):
             start = time.time()
 
             while len(self.ltl_planner_local.trace) == 0:
-                rospy.logwarn('Waiting for the trace callback from agent 1')
+                rospy.logwarn('Waiting for the trace callback from current agent')
 
             if self.ltl_planner_local.replan_level_2():
                 self.publish_local()
@@ -245,7 +250,7 @@ class Local_Planner(object):
             start = time.time()
 
             while len(self.ltl_planner_local.trace) == 0:
-                rospy.logwarn('Waiting for the trace and Updated TS callbacks from agent 1')
+                rospy.logwarn('Waiting for the trace callbacks from current agent')
 
             if self.ltl_planner_local.replan_level_3():
                 self.publish_local()
@@ -326,18 +331,57 @@ class Local_Planner(object):
                 update_info_msg = UpdateInfo()
                 for added_pair in list(update_info["added"]):
                     trans_info_msg = TransitionSystemInfo()
-                    trans_info_msg.ts_pair = list(added_pair)
+                    for tt in added_pair:
+                        ts_msg = TransitionSystemState()
+                        ts_msg.state_dimension_names = [item for sublist in
+                                                              self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item
+                                                              in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(tt) is tuple:
+                            ts_msg.states = list(tt)
+                        # Else state is a single string
+                        else:
+                            ts_msg.states = [tt]
+
+                        trans_info_msg.ts_pair.append(ts_msg)
+
                     update_info_msg.added_ts.append(trans_info_msg)
 
                 for relable_pair in list(update_info["relabel"]):
                     trans_info_msg = TransitionSystemInfo()
-                    trans_info_msg.ts_pair = list(relable_pair)
+                    for tt in relable_pair:
+                        ts_msg = TransitionSystemState()
+                        ts_msg.state_dimension_names = [item for sublist in
+                                                        self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item
+                                                        in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(tt) is tuple:
+                            ts_msg.states = list(tt)
+                        # Else state is a single string
+                        else:
+                            ts_msg.states = [tt]
+
+                        trans_info_msg.ts_pair.append(ts_msg)
+
                     update_info_msg.relabel_ts.append(trans_info_msg)
 
                 for deleted_pair in list(update_info["deleted"]):
                     trans_info_msg = TransitionSystemInfo()
-                    trans_info_msg.ts_pair = list(deleted_pair)
-                    update_info_msg.added_ts.append(trans_info_msg)
+                    for tt in deleted_pair:
+                        ts_msg = TransitionSystemState()
+                        ts_msg.state_dimension_names = [item for sublist in
+                                                        self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item
+                                                        in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(tt) is tuple:
+                            ts_msg.states = list(tt)
+                        # Else state is a single string
+                        else:
+                            ts_msg.states = [tt]
+
+                        trans_info_msg.ts_pair.append(ts_msg)
+
+                    update_info_msg.deleted_ts.append(trans_info_msg)
 
         else:
             # the rest cases will require a global reallocation and only UpdateInfo is possibly needed
@@ -345,22 +389,59 @@ class Local_Planner(object):
                 update_info_msg = UpdateInfo()
                 for added_pair in list(update_info["added"]):
                     trans_info_msg = TransitionSystemInfo()
-                    trans_info_msg.ts_pair = list(added_pair)
+                    for tt in added_pair:
+                        ts_msg = TransitionSystemState()
+                        ts_msg.state_dimension_names = [item for sublist in
+                                                        self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item
+                                                        in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(tt) is tuple:
+                            ts_msg.states = list(tt)
+                        # Else state is a single string
+                        else:
+                            ts_msg.states = [tt]
+
+                        trans_info_msg.ts_pair.append(ts_msg)
+
                     update_info_msg.added_ts.append(trans_info_msg)
 
                 for relable_pair in list(update_info["relabel"]):
                     trans_info_msg = TransitionSystemInfo()
-                    trans_info_msg.ts_pair = list(relable_pair)
+                    for tt in relable_pair:
+                        ts_msg = TransitionSystemState()
+                        ts_msg.state_dimension_names = [item for sublist in
+                                                        self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item
+                                                        in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(tt) is tuple:
+                            ts_msg.states = list(tt)
+                        # Else state is a single string
+                        else:
+                            ts_msg.states = [tt]
+
+                        trans_info_msg.ts_pair.append(ts_msg)
+
                     update_info_msg.relabel_ts.append(trans_info_msg)
 
                 for deleted_pair in list(update_info["deleted"]):
                     trans_info_msg = TransitionSystemInfo()
-                    trans_info_msg.ts_pair = list(deleted_pair)
-                    update_info_msg.added_ts.append(trans_info_msg)
+                    for tt in deleted_pair:
+                        ts_msg = TransitionSystemState()
+                        ts_msg.state_dimension_names = [item for sublist in
+                                                        self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item
+                                                        in sublist]
+                        # If TS state is more than 1 dimension (is a tuple)
+                        if type(tt) is tuple:
+                            ts_msg.states = list(tt)
+                        # Else state is a single string
+                        else:
+                            ts_msg.states = [tt]
+
+                        trans_info_msg.ts_pair.append(ts_msg)
+
+                    update_info_msg.deleted_ts.append(trans_info_msg)
 
         self.global_replan_pub_.publish(global_replanning_msg)
-
-
 
 
 #==============================
