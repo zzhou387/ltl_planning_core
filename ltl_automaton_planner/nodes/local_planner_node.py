@@ -13,7 +13,7 @@ import std_msgs
 
 from ltl_automaton_planner.ltl_tools.ts import TSModel
 from ltl_automaton_planner.ltl_tools.product import ProdAut, ProdAut_Run
-from ltl_automaton_planner.ltl_tools.ltl_planner_multi_robot_exp import LocalLTLPlanner
+from ltl_automaton_planner.ltl_tools.local_ltl_planner import LocalLTLPlanner
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -36,9 +36,15 @@ from ltl_automation_a1.srv import LTLTrace
 ###########################################################
 
 class Local_Planner(object):
-    def __init__(self, robot_name):
+    def __init__(self):
         # init parameters, automaton, etc...
-        self.robot_name_ = robot_name
+        if (rospy.has_param("~robot_name")):
+            self.robot_name_ = rospy.get_param("~robot_name")
+            rospy.logwarn(self.robot_name_)
+        else:
+            # self.robot_name_ = "dr"
+            # rospy.logwarn(self.robot_name_)
+            raise InitError("Cannot initialize LTL Local Planner, no robot name provided")
 
         self.init_params()
 
@@ -64,16 +70,16 @@ class Local_Planner(object):
 
         # Transition system
         #-------------------
-        if self.robot_name_ is "dr":
+        if self.robot_name_ == "dr":
             transition_system = rospy.get_param('transition_system_mobile_1_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/dr_0/local_planner/action_plan'
             self.trace_topic_name_ = '/dr_0/ltl_trace'
             self.replanning_topic_name_ = '/dr_0/replanning_request'
-            self.global_replanning_topic_name_ = '/dr_0/global_planner/replanning_request'
+            self.global_replanning_topic_name_ = '/dr_0/global_replanning_request'
             self.global_action_plan_topic_name_ = '/dr_0/global_planner/action_plan'
 
-        elif self.robot_name_ is "a1":
+        elif self.robot_name_ == "a1":
             transition_system = rospy.get_param('transition_system_quadruped_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/a1_gazebo/local_planner/action_plan'
@@ -82,7 +88,7 @@ class Local_Planner(object):
             self.global_replanning_topic_name_ = '/a1_gazebo/global_replanning_request'
             self.global_action_plan_topic_name_ = '/a1_gazebo/global_planner/action_plan'
 
-        elif self.robot_name_ is "wassi":
+        elif self.robot_name_ == "wassi":
             transition_system = rospy.get_param('transition_system_mobile_2_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/wassi_0/local_planner/action_plan'
@@ -137,7 +143,7 @@ class Local_Planner(object):
         self.replan_sub_ = rospy.Subscriber(self.replanning_topic_name_, std_msgs.msg.Int8, self.ltl_replan_callback, queue_size=1)
 
         # Subscribe to the action plan from global planner (including the initial allocation)
-        self.new_local_plan_pub_ = rospy.Subscriber(self.global_action_plan_topic_name_, LTLPlan, self.global_action_callback, queue_size=1)
+        self.new_local_plan_pub_ = rospy.Subscriber(self.global_action_plan_topic_name_, LTLStateArray, self.global_action_callback, queue_size=1)
 
 
     def ts_trace_callback(self, msg=LTLPlan()):
@@ -222,7 +228,7 @@ class Local_Planner(object):
             self.ltl_planner_local.trace = list()
 
         if(replan_status == 2):
-            rospy.logwarn('LTL Local Planner: received replanning Level 2: handling abrupt state change from agent 1')
+            rospy.logwarn('LTL Local Planner: received replanning Level 2: handling abrupt state change')
             # Replan
             start = time.time()
 
@@ -259,15 +265,15 @@ class Local_Planner(object):
                 self.publish_global_replanning_request(0, self.ltl_planner_local.local_plan.ts_state_sequence,
                                                        self.ltl_planner_local.local_plan.buchi_state_sequence,
                                                        self.ltl_planner_local.update_info)
-                self.ltl_planner_local.trace = list()
-                self.ltl_planner_local.update_info = {}
 
             else:
                 # Send global replanning request to global planner
                 rospy.logwarn("LTL Local Planner: sending request to global planner for reallocation!")
+                rospy.logwarn("LTL Local Planner: updating info is: "+str(self.ltl_planner_local.update_info))
                 self.publish_global_replanning_request(3, update_info=self.ltl_planner_local.update_info)
-                self.ltl_planner_local.trace = list()
-                self.ltl_planner_local.update_info = {}
+
+            self.ltl_planner_local.trace = list()
+            self.ltl_planner_local.update_info = {}
 
 
     def publish_local(self):
@@ -306,9 +312,9 @@ class Local_Planner(object):
         global_replanning_msg.level = replan_level
         if replan_level == 0:
             # level 0 is for sending successful local plans
-            if ts_seq and buchi_seq:
-                ltl_state_msg = LTLState()
+            if (ts_seq is not None) and (buchi_seq is not None):
                 for ts_state, buchi_state in zip(ts_seq, buchi_seq):
+                    ltl_state_msg = LTLState()
                     ts_state_msg = TransitionSystemState()
                     ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item in sublist]
                     # If TS state is more than 1 dimension (is a tuple)
@@ -327,7 +333,7 @@ class Local_Planner(object):
                 raise InitError("buchi or TS sequence is empty")
 
             # TS could change
-            if update_info:
+            if update_info is not None:
                 update_info_msg = UpdateInfo()
                 for added_pair in list(update_info["added"]):
                     trans_info_msg = TransitionSystemInfo()
@@ -383,9 +389,11 @@ class Local_Planner(object):
 
                     update_info_msg.deleted_ts.append(trans_info_msg)
 
+                global_replanning_msg.update_info = update_info_msg
+
         else:
             # the rest cases will require a global reallocation and only UpdateInfo is possibly needed
-            if update_info:
+            if update_info is not None:
                 update_info_msg = UpdateInfo()
                 for added_pair in list(update_info["added"]):
                     trans_info_msg = TransitionSystemInfo()
@@ -441,6 +449,8 @@ class Local_Planner(object):
 
                     update_info_msg.deleted_ts.append(trans_info_msg)
 
+                global_replanning_msg.update_info = update_info_msg
+
         self.global_replan_pub_.publish(global_replanning_msg)
 
 
@@ -449,13 +459,10 @@ class Local_Planner(object):
 #==============================
 if __name__ == '__main__':
 
-    if len(sys.argv) < 2:
-        rospy.logerr("LTL Local Planner: not enough inputs for robot name")
-    else:
-        rospy.init_node('ltl_planner' + sys.argv[1], anonymous=False)
-        try:
-            ltl_planner_node = Local_Planner(sys.argv[1])
-            rospy.spin()
-        except ValueError as e:
-            rospy.logerr("LTL Local Planner: "+str(e))
-            rospy.logerr("LTL Local Planner: shutting down...")
+    rospy.init_node('local_ltl_planner', anonymous=False)
+    try:
+        ltl_planner_node = Local_Planner()
+        rospy.spin()
+    except ValueError as e:
+        rospy.logerr("LTL Local Planner: "+str(e))
+        rospy.logerr("LTL Local Planner: shutting down...")

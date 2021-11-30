@@ -283,7 +283,7 @@ class ProdAut(DiGraph):
 
 
     def update_local_pa(self, trace, old_run, checkLast=False):
-        local_pa_plan = old_run.ts_state_sequence
+        local_pa_plan = old_run.prefix
         local_ts_trace = trace
         #zip will stop after one list runs out
         #double check the trace is satisfying the plan

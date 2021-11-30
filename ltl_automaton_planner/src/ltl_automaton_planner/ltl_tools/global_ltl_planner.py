@@ -106,6 +106,9 @@ class GlobalLTLPlanner(object):
 
         # Call ros service for requesting the synchronization
         self.trace_dic = {}
+        self.trace_dic[0] = list()
+        self.trace_dic[1] = list()
+        self.trace_dic[2] = list()
         service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
@@ -113,8 +116,8 @@ class GlobalLTLPlanner(object):
         service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
         service_3(request=1)
 
-        while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0) and \
+        while (len(self.trace_dic[0]) == 0) or \
+                (len(self.trace_dic[1]) == 0) or \
                 (len(self.trace_dic[2]) == 0):
             rospy.logwarn('Waiting for the trace callback from all agents')
 
@@ -128,6 +131,9 @@ class GlobalLTLPlanner(object):
     def replan_level_2(self):
         #Call ros service for requesting the synchronization
         self.trace_dic = {}
+        self.trace_dic[0] = list()
+        self.trace_dic[1] = list()
+        self.trace_dic[2] = list()
         service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
@@ -135,8 +141,8 @@ class GlobalLTLPlanner(object):
         service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
         service_3(request=1)
 
-        while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0) and \
+        while (len(self.trace_dic[0]) == 0) or \
+                (len(self.trace_dic[1]) == 0) or \
                 (len(self.trace_dic[2]) == 0):
             rospy.logwarn('Waiting for the trace callback from all agents')
 
@@ -160,6 +166,9 @@ class GlobalLTLPlanner(object):
 
         # Call ros service for requesting the synchronization
         self.trace_dic = {}
+        self.trace_dic[0] = list()
+        self.trace_dic[1] = list()
+        self.trace_dic[2] = list()
         service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
         service_1(request=1)
         service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
@@ -167,8 +176,8 @@ class GlobalLTLPlanner(object):
         service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
         service_3(request=1)
 
-        while (len(self.trace_dic[0]) == 0) and \
-                (len(self.trace_dic[1]) == 0) and \
+        while (len(self.trace_dic[0]) == 0) or \
+                (len(self.trace_dic[1]) == 0) or \
                 (len(self.trace_dic[2]) == 0):
             rospy.logwarn('Waiting for the trace callback from all agents')
 

@@ -196,8 +196,17 @@ class Central_Planner(object):
         if (replan_status == 0):
             rospy.logwarn('LTL Global Planner: local replanning for robot %d was successful; '
                           'update team model according to new local plan' % self.ltl_planner_multi_robot.local_replan_rname)
+
+            # Update the product automaton
+            if len(msg.update_info.added_ts) != 0 or len(msg.update_info.relabel_ts) != 0 or len(
+                    msg.update_info.deleted_ts) != 0:
+                self.ltl_planner_multi_robot.update_info = handle_update_info_msg(msg.update_info)
+                self.ltl_planner_multi_robot.update_product(has_ts_update=True)
+            else:
+                self.ltl_planner_multi_robot.update_product(has_ts_update=False)
+
             # Update the new local plan
-            if self.ltl_planner_multi_robot.plans and len(msg.ltl_states) is not 0:
+            if self.ltl_planner_multi_robot.plans is not None and len(msg.ltl_states) is not 0:
                 new_local_plan = list()
                 for ltl_state_msg in msg.ltl_states:
                     ts_state = handle_ts_state_msg(ltl_state_msg.ts_state)
@@ -211,19 +220,11 @@ class Central_Planner(object):
                 raise ValueError(
                     "the original team plan does not exist or global replan msg does not contain latest local plan")
 
-            # Update the product automaton
-            if len(msg.update_info.added_ts) != 0 or len(msg.update_info.relabel_ts) != 0 or len(
-                    msg.update_info.deleted_ts) != 0:
-                self.ltl_planner_multi_robot.update_info = handle_update_info_msg(msg.update_info)
-                self.ltl_planner_multi_robot.update_product(has_ts_update=True)
-            else:
-                self.ltl_planner_multi_robot.update_product(has_ts_update=False)
-
             self.ltl_planner_multi_robot.local_replan_rname = None
             self.ltl_planner_multi_robot.update_info = {}
 
         if (replan_status == 1):
-            rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction from agent 1')
+            rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction ')
             start = time.time()
             # Replan
             rospy.loginfo(
@@ -244,7 +245,7 @@ class Central_Planner(object):
                 # TODO: add safety mechanism
 
         if (replan_status == 2):
-            rospy.logwarn('LTL Global Planner: received replanning Level 2: handling abrupt state change from agent 1')
+            rospy.logwarn('LTL Global Planner: received replanning Level 2: handling abrupt state change ')
             # Replan
             start = time.time()
             rospy.loginfo(
@@ -261,7 +262,7 @@ class Central_Planner(object):
 
         if (replan_status == 3):
             rospy.logwarn(
-                'LTL Global Planner: received replanning Level 3: handling transition system change from agent 1')
+                'LTL Global Planner: received replanning Level 3: handling transition system change ')
             # Replan
             start = time.time()
             rospy.loginfo(
@@ -286,14 +287,23 @@ class Central_Planner(object):
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
-    def ltl_replan_callback_2(self, msg):
+    def ltl_replan_callback_2(self, msg=GlobalReplanInfo()):
         replan_status = msg.level
         self.ltl_planner_multi_robot.local_replan_rname = 1
         if (replan_status == 0):
             rospy.logwarn('LTL Global Planner: local replanning for robot %d was successful; '
                           'update team model according to new local plan' % self.ltl_planner_multi_robot.local_replan_rname)
+
+            # Update the product automaton
+            if len(msg.update_info.added_ts) != 0 or len(msg.update_info.relabel_ts) != 0 or len(
+                    msg.update_info.deleted_ts) != 0:
+                self.ltl_planner_multi_robot.update_info = handle_update_info_msg(msg.update_info)
+                self.ltl_planner_multi_robot.update_product(has_ts_update=True)
+            else:
+                self.ltl_planner_multi_robot.update_product(has_ts_update=False)
+
             # Update the new local plan
-            if self.ltl_planner_multi_robot.plans and len(msg.ltl_states) is not 0:
+            if self.ltl_planner_multi_robot.plans is not None and len(msg.ltl_states) is not 0:
                 new_local_plan = list()
                 for ltl_state_msg in msg.ltl_states:
                     ts_state = handle_ts_state_msg(ltl_state_msg.ts_state)
@@ -307,19 +317,11 @@ class Central_Planner(object):
                 raise ValueError(
                     "the original team plan does not exist or global replan msg does not contain latest local plan")
 
-            # Update the product automaton
-            if len(msg.update_info.added_ts) != 0 or len(msg.update_info.relabel_ts) != 0 or len(
-                    msg.update_info.deleted_ts) != 0:
-                self.ltl_planner_multi_robot.update_info = handle_update_info_msg(msg.update_info)
-                self.ltl_planner_multi_robot.update_product(has_ts_update=True)
-            else:
-                self.ltl_planner_multi_robot.update_product(has_ts_update=False)
-
             self.ltl_planner_multi_robot.local_replan_rname = None
             self.ltl_planner_multi_robot.update_info = {}
 
         if (replan_status == 1):
-            rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction from agent 1')
+            rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction ')
             start = time.time()
             # Replan
             rospy.loginfo(
@@ -340,7 +342,7 @@ class Central_Planner(object):
             # TODO: add safety mechanism
 
         if (replan_status == 2):
-            rospy.logwarn('LTL Global Planner: received replanning Level 2: handling abrupt state change from agent 1')
+            rospy.logwarn('LTL Global Planner: received replanning Level 2: handling abrupt state change ')
             # Replan
             start = time.time()
             rospy.loginfo(
@@ -357,7 +359,7 @@ class Central_Planner(object):
 
         if (replan_status == 3):
             rospy.logwarn(
-                'LTL Global Planner: received replanning Level 3: handling transition system change from agent 1')
+                'LTL Global Planner: received replanning Level 3: handling transition system change ')
             # Replan
             start = time.time()
             rospy.loginfo(
@@ -382,14 +384,23 @@ class Central_Planner(object):
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
-    def ltl_replan_callback_3(self, msg):
+    def ltl_replan_callback_3(self, msg=GlobalReplanInfo()):
         replan_status = msg.level
         self.ltl_planner_multi_robot.local_replan_rname = 2
         if (replan_status == 0):
             rospy.logwarn('LTL Global Planner: local replanning for robot %d was successful; '
                           'update team model according to new local plan' % self.ltl_planner_multi_robot.local_replan_rname)
+
+            # Update the product automaton
+            if len(msg.update_info.added_ts) != 0 or len(msg.update_info.relabel_ts) != 0 or len(
+                    msg.update_info.deleted_ts) != 0:
+                self.ltl_planner_multi_robot.update_info = handle_update_info_msg(msg.update_info)
+                self.ltl_planner_multi_robot.update_product(has_ts_update=True)
+            else:
+                self.ltl_planner_multi_robot.update_product(has_ts_update=False)
+
             # Update the new local plan
-            if self.ltl_planner_multi_robot.plans and len(msg.ltl_states) is not 0:
+            if self.ltl_planner_multi_robot.plans is not None and len(msg.ltl_states) is not 0:
                 new_local_plan = list()
                 for ltl_state_msg in msg.ltl_states:
                     ts_state = handle_ts_state_msg(ltl_state_msg.ts_state)
@@ -403,19 +414,11 @@ class Central_Planner(object):
                 raise ValueError(
                     "the original team plan does not exist or global replan msg does not contain latest local plan")
 
-            # Update the product automaton
-            if len(msg.update_info.added_ts) != 0 or len(msg.update_info.relabel_ts) != 0 or len(
-                    msg.update_info.deleted_ts) != 0:
-                self.ltl_planner_multi_robot.update_info = handle_update_info_msg(msg.update_info)
-                self.ltl_planner_multi_robot.update_product(has_ts_update=True)
-            else:
-                self.ltl_planner_multi_robot.update_product(has_ts_update=False)
-
             self.ltl_planner_multi_robot.local_replan_rname = None
             self.ltl_planner_multi_robot.update_info = {}
 
         if (replan_status == 1):
-            rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction from agent 1')
+            rospy.logwarn('LTL Global Planner: received replanning Level 1; handling malfunction ')
             start = time.time()
             # Replan
             rospy.loginfo(
@@ -436,7 +439,7 @@ class Central_Planner(object):
             # TODO: add safety mechanism
 
         if (replan_status == 2):
-            rospy.logwarn('LTL Global Planner: received replanning Level 2: handling abrupt state change from agent 1')
+            rospy.logwarn('LTL Global Planner: received replanning Level 2: handling abrupt state change ')
             # Replan
             start = time.time()
             rospy.loginfo(
@@ -453,7 +456,7 @@ class Central_Planner(object):
 
         if (replan_status == 3):
             rospy.logwarn(
-                'LTL Global Planner: received replanning Level 3: handling transition system change from agent 1')
+                'LTL Global Planner: received replanning Level 3: handling transition system change ')
             # Replan
             start = time.time()
             rospy.loginfo(
@@ -591,8 +594,8 @@ class Central_Planner(object):
                     self.ltl_planner_multi_robot.plans.buchi_sequence.items()):
                 assert r_idx == r_idx_2
                 if r_idx == 0:
-                    ltl_state_msg = LTLState()
                     for ts_state, buchi_state in zip(ts_seq, buchi_seq):
+                        ltl_state_msg = LTLState()
                         ts_state_msg = TransitionSystemState()
                         ts_state_msg.state_dimension_names = [item for sublist in
                                                               self.ltl_planner_multi_robot.pro_list_initial[
@@ -614,8 +617,8 @@ class Central_Planner(object):
                     self.plan_pub_1.publish(plan_1_msg)
 
                 if r_idx == 1:
-                    ltl_state_msg = LTLState()
                     for ts_state, buchi_state in zip(ts_seq, buchi_seq):
+                        ltl_state_msg = LTLState()
                         ts_state_msg = TransitionSystemState()
                         ts_state_msg.state_dimension_names = [item for sublist in
                                                               self.ltl_planner_multi_robot.pro_list_initial[
@@ -637,8 +640,8 @@ class Central_Planner(object):
                     self.plan_pub_2.publish(plan_2_msg)
 
                 if r_idx == 2:
-                    ltl_state_msg = LTLState()
                     for ts_state, buchi_state in zip(ts_seq, buchi_seq):
+                        ltl_state_msg = LTLState()
                         ts_state_msg = TransitionSystemState()
                         ts_state_msg.state_dimension_names = [item for sublist in
                                                               self.ltl_planner_multi_robot.pro_list_initial[

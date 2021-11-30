@@ -303,7 +303,7 @@ def compute_local_plan_decentral(product):
 
 def find_reusable_plan_decentral(product, old_run):
     start = time.time()
-    local_pa_plan = old_run
+    local_pa_plan = old_run.prefix
     updated_init = product.graph['updated_initial']
     new_local_plan = list()
     for i in range(len(local_pa_plan)):

@@ -36,6 +36,9 @@ find_package(catkin REQUIRED COMPONENTS
    LTLState.msg
    LTLStateArray.msg
    LTLStateRuns.msg
+   GlobalReplanInfo.msg
+   UpdateInfo.msg
+   TransitionSystemInfo.msg
  )
 
 ## Generate services in the 'srv' folder

@@ -1,5 +1,4 @@
 import rospy
-from eltl_automaton_planner.ltl_tools.team import TeamModel
 from ltl_automaton_planner.ltl_tools.product import ProdAut
 from ltl_automaton_planner.ltl_tools.buchi import mission_to_buchi
 from ltl_automaton_planner.ltl_tools.decomposition_set import get_decomposition_set
@@ -18,7 +17,7 @@ class LocalLTLPlanner(object):
     def __init__(self, ts, hard_spec, soft_spec, beta=1000, gamma=10):
         self.hard_spec = hard_spec
         self.soft_spec = soft_spec
-        if ts:
+        if ts is not None:
             self.ts = ts
         else:
             rospy.logerr("TS input ERROR")
