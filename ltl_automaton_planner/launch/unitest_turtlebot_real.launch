@@ -16,7 +16,7 @@
   <param name="transition_system_turtlebot_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_turtlebot_test.yaml" />
 
   <!-- Run the gazebo world for turtlebot -->
-  <include file="$(find ltl_automation_a1)/launch/turtlebot_sim_bt_decen.launch">
+  <include file="$(find ltl_automation_a1)/launch/turtlebot_real_bt_decen.launch">
     <arg name="agent_name" value="$(arg agent_name)" />
     <arg name="plan_name" value="/$(arg agent_name)/local_planner/action_plan" />
     <arg name="pose_x" default="3.5" />
