@@ -48,9 +48,10 @@ class Local_Planner(object):
 
         self.init_params()
 
+        self.setup_pub_sub()
+
         self.build_automaton()
 
-        self.setup_pub_sub()
 
     def init_params(self):
         #Get parameters from parameter server

@@ -4,7 +4,8 @@ from ltl_automaton_planner.ltl_tools.buchi import mission_to_buchi
 from ltl_automaton_planner.ltl_tools.decomposition_set import get_decomposition_set
 from ltl_automaton_planner.ltl_tools.graph_search_team import compute_team_plans, compute_local_plan, find_reusable_plan
 from ltl_automaton_planner.ltl_tools.discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history,\
-                                                          compute_local_plan_decentral, find_reusable_plan_decentral
+                                                          compute_local_plan_decentral, find_reusable_plan_decentral, \
+                                                          dijkstra_plan_networkX_finite
 from ltl_automation_a1.srv import LTLTrace
 
 
@@ -48,7 +49,7 @@ class LocalLTLPlanner(object):
         # Only called when no plan is initialized at the beginning (to be tested)
         if style == 'static':
             if self.product:
-                self.local_plan, plantime = dijkstra_plan_networkX(self.product, self.gamma)
+                self.local_plan, plantime = dijkstra_plan_networkX_finite(self.product, self.gamma)
 
         # Called when there is a local state change
         elif style == 'Local_state_change':
