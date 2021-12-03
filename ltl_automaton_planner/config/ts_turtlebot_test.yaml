@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region", "DR_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "reception"
+    initial: "corridor1"
     nodes:
       reception:
         attr:
@@ -56,7 +56,7 @@ state_models:
       corridor4:
         attr:
           type: "square"
-          pose: [[21.5,5.625], [0]]
+          pose: [[21.45,3.95], [0]]
           length: 1.0
           hysteresis: 0.05
         connected_to:
@@ -67,8 +67,8 @@ state_models:
       corridor5:
         attr:
           type: "square"
-          pose: [ [ 21.35,7.2 ], [ 0 ] ]
-          length: 1.0
+          pose: [ [ 21.35,7.55 ], [ 0 ] ]
+          length: 1.5
           hysteresis: 0.05
         connected_to:
           corridor5: "stay"
@@ -165,49 +165,49 @@ actions:
     guard: "1"
     attr:
       region: corridor4
-      pose: [[21.77,5.625,0], [0,0,-0.707,-0.707]]
+      pose: [[21.73,3.95,0], [0,0,-0.707,-0.707]]
   goto_c4_from_r1:
     type: "move"
     weight: 10
     guard: "1"
     attr:
       region: corridor4
-      pose: [[21.11,5.625,0], [0,0,-0.699,0.715]]
+      pose: [[21.3,3.95,0], [0,0,-0.699,0.715]]
   goto_c4_from_r2:
     type: "move"
     weight: 10
     guard: "1"
     attr:
       region: corridor4
-      pose: [[21.11,5.625,0], [0,0,-0.699,0.715]]
+      pose: [[21.3,3.95,0], [0,0,-0.699,0.715]]
   goto_c4_from_c5:
     type: "move"
     weight: 10
     guard: "1"
     attr:
       region: corridor4
-      pose: [[21.11,5.625,0 ], [ 0,0,-0.699,0.715 ] ]
+      pose: [[21.3,3.95,0 ], [ 0,0,-0.699,0.715 ] ]
   goto_c5_from_c4:
     type: "move"
     weight: 10
     guard: "1"
     attr:
       region: corridor5
-      pose: [ [ 21.75,7.0,0 ], [ 0,0,0.707,0.707 ] ]
+      pose: [ [ 21.65,7.55,0 ], [ 0,0,0.707,0.707 ] ]
   goto_c5_from_r1:
     type: "move"
     weight: 10
     guard: "1"
     attr:
       region: corridor5
-      pose: [ [ 21.75,7.4,0 ], [ 0,0,1,0 ] ]
+      pose: [ [ 21.65,7.55,0 ], [ 0,0,1,0 ] ]
   goto_c5_from_r2:
     type: "move"
     weight: 10
     guard: "1"
     attr:
       region: corridor5
-      pose: [[21.05,7.38,0], [0,0,0,1]]
+      pose: [[21.15,7.55,0], [0,0,0,1]]
   goto_r1_from_c4:
     type: "move"
     weight: 10

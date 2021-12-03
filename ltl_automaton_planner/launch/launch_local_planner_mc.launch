@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Run local LTL planner node -->
+  <node name="$(arg agent_name)_local_ltl_planner" pkg="ltl_automaton_planner" type="local_planner_node_unitest.py" output="screen" >
+    <param name="robot_name" value="mc" />
+  </node>
+
+</launch>
