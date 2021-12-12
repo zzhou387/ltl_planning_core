@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="initial_ts_state_from_agent" default="False"/>
+<!--   <arg name="num_mobile" default=1/> -->
+<!--   <arg name="num_quadruped" default=1/> -->
+
+  <arg name="agent_name" default="mini_cheetah"/>
+  <arg name="rviz" default="true"/>
+
+<!--   <param name="agent_name" type="string" value="$(arg agent_name)" /> -->
+  <!-- hard and soft task parameters -->
+  <rosparam command="load" file="$(find ltl_automaton_planner)/config/ltl_formula_mini_cheetah_test.yaml" />
+
+  <!-- Transition system for mobile robot-->
+  <param name="transition_system_mini_cheetah_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_mini_cheetah_test.yaml" />
+
+  <!-- Run the gazebo world for mini-cheetah -->
+  <include file="$(find ltl_automation_a1)/launch/mini_cheetah_real_bt_decen.launch">
+    <arg name="agent_name" value="$(arg agent_name)" />
+    <arg name="plan_name" value="/$(arg agent_name)/local_planner/action_plan" />
+    <arg name="pose_x" default="3.5" />
+    <arg name="pose_y" default="1.5" />
+    <arg name="init_yaw" default="-1.57" />
+  </include>
+
+
+</launch>
