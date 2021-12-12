@@ -6,7 +6,7 @@ from ltl_automaton_planner.ltl_tools.graph_search_team import compute_team_plans
 from ltl_automaton_planner.ltl_tools.discrete_plan import dijkstra_plan_networkX, dijkstra_plan_optimal, improve_plan_given_history,\
                                                           compute_local_plan_decentral, find_reusable_plan_decentral, \
                                                           dijkstra_plan_networkX_finite
-from ltl_automation_a1.srv import LTLTrace
+from ltl_automaton_bt.srv import LTLTrace
 
 
 ###########################################################

@@ -4,7 +4,7 @@ from ltl_automaton_planner.ltl_tools.product import ProdAut
 from ltl_automaton_planner.ltl_tools.buchi import mission_to_buchi
 from ltl_automaton_planner.ltl_tools.decomposition_set import get_decomposition_set
 from ltl_automaton_planner.ltl_tools.graph_search_team import compute_team_plans, compute_local_plan, find_reusable_plan
-from ltl_automation_a1.srv import LTLTrace
+from ltl_automaton_bt.srv import LTLTrace
 
 
 ###########################################################

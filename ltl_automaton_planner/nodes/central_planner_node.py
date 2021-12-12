@@ -30,7 +30,7 @@ from networkx.drawing.nx_agraph import to_agraph
 # Import dynamic reconfigure components for dynamic parameters (see dynamic_reconfigure and dynamic_params package)
 from dynamic_reconfigure.server import Server as DRServer
 from ltl_automaton_planner.cfg import LTLAutomatonDPConfig
-from ltl_automation_a1.srv import LTLTrace
+from ltl_automaton_bt.srv import LTLTrace
 
 
 ###########################################################
