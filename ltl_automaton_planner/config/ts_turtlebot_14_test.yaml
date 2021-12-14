@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region", "DR_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "reception"
+    initial: "corridor3"
     nodes:
       reception:
         attr:
@@ -115,140 +115,140 @@ state_models:
 actions:
   goto_rec_from_c1:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: reception
       pose: [[3.5,1.5,0], [0,0,-0.707,0.707]]
   goto_c1_from_rec:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor1
       pose: [[10.0,0,0], [0,0,0,1]]
   goto_c1_from_c2:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor1
       pose: [[10.0,1.3,0], [0,0,1,0]]
   goto_c2_from_c1:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor2
       pose: [[16,0.15,0], [0,0,0,1]]
   goto_c2_from_c3:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor2
       pose: [[16,1.15,0], [0,0,1,0]]
   goto_c3_from_c2:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor3
       pose: [[21.77,0.48,0], [0,0,0.707,0.707]]
   goto_c3_from_c4:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor3
       pose: [[21.3,1.28,0], [0,0,1,0]]
   goto_c4_from_c3:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor4
       pose: [[21.73,3.95,0], [0,0,-0.707,-0.707]]
   goto_c4_from_r1:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor4
       pose: [[21.3,3.95,0], [0,0,-0.699,0.715]]
   goto_c4_from_r2:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor4
       pose: [[21.3,3.95,0], [0,0,-0.699,0.715]]
   goto_c4_from_c5:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor4
       pose: [[21.3,3.95,0 ], [ 0,0,-0.699,0.715 ] ]
   goto_c5_from_c4:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor5
       pose: [ [ 21.65,7.55,0 ], [ 0,0,0.707,0.707 ] ]
   goto_c5_from_r1:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor5
       pose: [ [ 21.65,7.55,0 ], [ 0,0,1,0 ] ]
   goto_c5_from_r2:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: corridor5
       pose: [[21.15,7.55,0], [0,0,0,1]]
   goto_r1_from_c4:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: room1
       pose: [[23.485,7.662,0], [0,0,0.707,0.707]]
   goto_r1_from_r2:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: room1
       pose: [[23.485,7.662,0], [0,0,0.707,0.707]]
   goto_r1_from_c5:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: room1
       pose: [ [ 23.485,7.662,0 ], [ 0,0,0.707,0.707 ] ]
   goto_r2_from_c4:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: room2
       pose: [[18.476,7.35,0], [0,0,1,0]]
   goto_r2_from_r1:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: room2
       pose: [[18.476,7.35,0], [0,0,1,0]]
   goto_r2_from_c5:
     type: "move"
-    weight: 20
+    weight: 10
     guard: "1"
     attr:
       region: room2

@@ -98,6 +98,33 @@ class Local_Planner(object):
             self.global_replanning_topic_name_ = '/wassi_0/global_replanning_request'
             self.global_action_plan_topic_name_ = '/wassi_0/global_planner/action_plan'
 
+        elif self.robot_name_ == "turtlebot_08":
+            transition_system = rospy.get_param('transition_system_turtlebot_08_textfile')
+            self.transition_system_ = import_ts_from_file(transition_system)
+            self.action_topic_name_ = '/turtlebot_08/local_planner/action_plan'
+            self.trace_topic_name_ = '/turtlebot_08/ltl_trace'
+            self.replanning_topic_name_ = '/turtlebot_08/replanning_request'
+            self.global_replanning_topic_name_ = '/turtlebot_08/global_replanning_request'
+            self.global_action_plan_topic_name_ = '/turtlebot_08/global_planner/action_plan'
+
+        elif self.robot_name_ == "turtlebot_14":
+            transition_system = rospy.get_param('transition_system_turtlebot_14_textfile')
+            self.transition_system_ = import_ts_from_file(transition_system)
+            self.action_topic_name_ = '/turtlebot_14/local_planner/action_plan'
+            self.trace_topic_name_ = '/turtlebot_14/ltl_trace'
+            self.replanning_topic_name_ = '/turtlebot_14/replanning_request'
+            self.global_replanning_topic_name_ = '/turtlebot_14/global_replanning_request'
+            self.global_action_plan_topic_name_ = '/turtlebot_14/global_planner/action_plan'
+
+        elif self.robot_name_ == "mini_cheetah":
+            transition_system = rospy.get_param('transition_system_mini_cheetah_textfile')
+            self.transition_system_ = import_ts_from_file(transition_system)
+            self.action_topic_name_ = '/mini_cheetah/local_planner/action_plan'
+            self.trace_topic_name_ = '/mini_cheetah/ltl_trace'
+            self.replanning_topic_name_ = '/mini_cheetah/replanning_request'
+            self.global_replanning_topic_name_ = '/mini_cheetah/global_replanning_request'
+            self.global_action_plan_topic_name_ = '/mini_cheetah/global_planner/action_plan'
+
         else:
             raise InitError("Robot type is unknown")
 
