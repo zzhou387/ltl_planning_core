@@ -9,5 +9,5 @@
 #hard_task: "<>(c7 && training && <>(c6 && training && <> (c7 && training && <>(p4 && standby)))) && []((!p4 && X p4) -> training) && "
 #hard_task: "<>(p6 && standby) && []((!p6 && X p6) -> loaded) && <>(p3 && standby) && []((!p3 && X p3) -> loaded)"
 #hard_task: "<>(c7 && training && <>(c6 && training && <> (c7 && training && <>(p4 && standby)))) && []((!p4 && X p4) -> training) && <>(p6 && standby) && []((!p6 && X p6) -> loaded) && <>(p3 && standby) && []((!p3 && X p3) -> loaded)"
-hard_task: "<>(reception && standby) && []((!reception && X reception) -> loaded)"
+hard_task: "<>(reception && unloaded) && []((!reception && X reception) -> loaded)"
 soft_task: ""

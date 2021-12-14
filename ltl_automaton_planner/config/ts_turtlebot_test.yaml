@@ -8,11 +8,11 @@
 #   turtlebot_load
 
 #state_dim: ["2d_pose_region", "turtlebot_load"]
-state_dim: ["2d_pose_region", "DR_load"]
+state_dim: ["2d_pose_region", "turtlebot_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "corridor1"
+    initial: "reception"
     nodes:
       reception:
         attr:
@@ -98,8 +98,8 @@ state_models:
 #          corridor4: "goto_c4_from_r2"
           corridor5: "goto_c5_from_r2"
 
-  DR_load:
-    ts_type: "DR_load"
+  turtlebot_load:
+    ts_type: "turtlebot_load"
     initial: "standby"
     nodes:
       standby:
@@ -107,7 +107,10 @@ state_models:
           loaded: "pick"
       loaded:
         connected_to:
-          standby: "drop"
+          unloaded: "drop"
+      unloaded:
+        connected_to:
+          standby: "reset"
 
 actions:
   goto_rec_from_c1:
@@ -261,11 +264,15 @@ actions:
     weight: 0
   pick:
     type: "pick"
-    guard: "room2"
+    guard: "reception"
     weight: 10
   drop:
     type: "drop"
     guard: "1"
     weight: 10
+  reset:
+    type: "reset"
+    guard: "1"
+    weight: 0
 
 

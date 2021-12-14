@@ -72,23 +72,23 @@ class Central_Planner(object):
         # LTL task
         # ----------
         # Get LTL hard task and raise error if don't exist
-        if (rospy.has_param('hard_task')):
-            self.hard_task = rospy.get_param('hard_task')
+        if (rospy.has_param('~hard_task')):
+            self.hard_task = rospy.get_param('~hard_task')
         else:
             raise InitError("Cannot initialize LTL Global Planner, no hard_task defined")
         # Get LTL soft task
-        self.soft_task = rospy.get_param('soft_task', "")
+        self.soft_task = rospy.get_param('~soft_task', "")
 
         # Transition system
         # -------------------
         # Get TS from param
-        transition_system_mobile_1_textfile = rospy.get_param('transition_system_turtlebot_08_textfile')
+        transition_system_mobile_1_textfile = rospy.get_param('~transition_system_turtlebot_08_textfile')
         self.transition_system_mobile_1 = import_ts_from_file(transition_system_mobile_1_textfile)
 
-        transition_system_mobile_2_textfile = rospy.get_param('transition_system_turtlebot_14_textfile')
+        transition_system_mobile_2_textfile = rospy.get_param('~transition_system_turtlebot_14_textfile')
         self.transition_system_mobile_2 = import_ts_from_file(transition_system_mobile_2_textfile)
 
-        transition_system_quadruped_textfile = rospy.get_param('transition_system_mini_cheetah_textfile')
+        transition_system_quadruped_textfile = rospy.get_param('~transition_system_mini_cheetah_textfile')
         self.transition_system_quadruped = import_ts_from_file(transition_system_quadruped_textfile)
         # print(self.transition_system)
 
