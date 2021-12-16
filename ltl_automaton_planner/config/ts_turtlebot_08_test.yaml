@@ -12,7 +12,7 @@ state_dim: ["2d_pose_region", "turtlebot_load"]
 state_models:
   2d_pose_region:
     ts_type: "2d_pose_region"
-    initial: "corridor3"
+    initial: "corridor1"
     nodes:
       reception:
         attr:
