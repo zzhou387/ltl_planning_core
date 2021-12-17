@@ -109,11 +109,11 @@ class GlobalLTLPlanner(object):
         self.trace_dic[0] = list()
         self.trace_dic[1] = list()
         self.trace_dic[2] = list()
-        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
+        service_1 = rospy.ServiceProxy('/turtlebot_08/synchronization_service', LTLTrace)
         service_1(request=1)
-        service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
+        service_2 = rospy.ServiceProxy('/turtlebot_14/synchronization_service', LTLTrace)
         service_2(request=1)
-        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
+        service_3 = rospy.ServiceProxy('/mini_cheetah/synchronization_service', LTLTrace)
         service_3(request=1)
 
         while (len(self.trace_dic[0]) == 0) or \
@@ -134,11 +134,11 @@ class GlobalLTLPlanner(object):
         self.trace_dic[0] = list()
         self.trace_dic[1] = list()
         self.trace_dic[2] = list()
-        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
+        service_1 = rospy.ServiceProxy('/turtlebot_08/synchronization_service', LTLTrace)
         service_1(request=1)
-        service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
+        service_2 = rospy.ServiceProxy('/turtlebot_14/synchronization_service', LTLTrace)
         service_2(request=1)
-        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
+        service_3 = rospy.ServiceProxy('/mini_cheetah/synchronization_service', LTLTrace)
         service_3(request=1)
 
         while (len(self.trace_dic[0]) == 0) or \
@@ -169,11 +169,11 @@ class GlobalLTLPlanner(object):
         self.trace_dic[0] = list()
         self.trace_dic[1] = list()
         self.trace_dic[2] = list()
-        service_1 = rospy.ServiceProxy('/dr_0/synchronization_service', LTLTrace)
+        service_1 = rospy.ServiceProxy('/turtlebot_08/synchronization_service', LTLTrace)
         service_1(request=1)
-        service_2 = rospy.ServiceProxy('/a1_gazebo/synchronization_service', LTLTrace)
+        service_2 = rospy.ServiceProxy('/turtlebot_14/synchronization_service', LTLTrace)
         service_2(request=1)
-        service_3 = rospy.ServiceProxy('/wassi_0/synchronization_service', LTLTrace)
+        service_3 = rospy.ServiceProxy('/mini_cheetah/synchronization_service', LTLTrace)
         service_3(request=1)
 
         while (len(self.trace_dic[0]) == 0) or \
