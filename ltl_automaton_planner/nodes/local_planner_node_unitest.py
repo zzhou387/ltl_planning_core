@@ -107,6 +107,15 @@ class Local_Planner(object):
             self.global_replanning_topic_name_ = '/turtlebot/global_replanning_request'
             self.global_action_plan_topic_name_ = '/turtlebot/global_planner/action_plan'
 
+        elif self.robot_name_ == "mini_cheetah":
+            transition_system = rospy.get_param('transition_system_mini_cheetah_textfile')
+            self.transition_system_ = import_ts_from_file(transition_system)
+            self.action_topic_name_ = '/mini_cheetah/local_planner/action_plan'
+            self.trace_topic_name_ = '/mini_cheetah/ltl_trace'
+            self.replanning_topic_name_ = '/mini_cheetah/replanning_request'
+            self.global_replanning_topic_name_ = '/mini_cheetah/global_replanning_request'
+            self.global_action_plan_topic_name_ = '/mini_cheetah/global_planner/action_plan'
+
         else:
             raise InitError("Robot type is unknown")
 
