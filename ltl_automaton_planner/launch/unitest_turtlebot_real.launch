@@ -19,9 +19,9 @@
   <include file="$(find ltl_automaton_bt)/launch/turtlebot_real_bt_decen.launch">
     <arg name="agent_name" value="$(arg agent_name)" />
     <arg name="plan_name" value="/$(arg agent_name)/local_planner/action_plan" />
-    <arg name="pose_x" default="3.5" />
-    <arg name="pose_y" default="1.5" />
-    <arg name="init_yaw" default="-1.57" />
+    <arg name="pose_x" default="0.0" />
+    <arg name="pose_y" default="0.0" />
+    <arg name="init_yaw" default="0.0" />
   </include>
 
 
