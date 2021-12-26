@@ -157,6 +157,13 @@ actions:
     attr:
       region: reception
       pose: [[0.0178523247435,1.24688182732,0], [0,0,0,1]]
+  goto_rec_from_c3:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: reception
+      pose: [ [ 0.0178523247435,1.24688182732,0 ], [ 0,0,0,1 ] ]
   goto_c1_from_rec:
     type: "move"
     weight: 10
