@@ -13,7 +13,7 @@
   <rosparam command="load" file="$(find ltl_automaton_planner)/config/ltl_formula_mini_cheetah_test.yaml" />
 
   <!-- Transition system for mobile robot-->
-  <param name="transition_system_mini_cheetah_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_mini_cheetah_test.yaml" />
+  <param name="transition_system_mini_cheetah_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_mini_cheetah_new.yaml" />
 
   <!-- Run the gazebo world for mini-cheetah -->
   <include file="$(find ltl_automaton_bt)/launch/mini_cheetah_real_bt_decen.launch">

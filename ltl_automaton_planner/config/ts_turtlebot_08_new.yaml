@@ -1,0 +1,392 @@
+# TS definitions are to be interpreted by the agent node. The LTL core planner only uses the node names, connections, weights, and action names to build its automaton.
+#
+# Possible TS types:
+#   3d_pose_region (3D pose [[x,y,z], [x,y,z,w]] with quaternion orientation)
+#   2d_pose_region (2D pose [[x,y], phi] with euler angle orientation)
+#   3d_point_region (3D point [x, y, z] without orientation)
+#   2d_point_region (2D point [x, y] without orientation)
+#   turtlebot_load
+
+#state_dim: ["2d_pose_region", "turtlebot_load"]
+state_dim: ["2d_pose_region", "turtlebot_load"]
+state_models:
+  2d_pose_region:
+    ts_type: "2d_pose_region"
+    initial: "reception"
+    nodes:
+      reception:
+        attr:
+          type: "square"
+          pose: [[0.0,0.0], [0]]
+          length: 4.0
+          hysteresis: 0.05
+        connected_to:
+          reception: "stay"
+          corridor1: "goto_c1_from_rec"
+          corridor3: "goto_c3_from_rec"
+      corridor1:
+        attr:
+          type: "square"
+          pose: [[0.1364,-5.15], [0]]
+          length: 2.0
+          hysteresis: 0.05
+        connected_to:
+          corridor1: "stay"
+          corridor2: "goto_c2_from_c1"
+          reception: "goto_rec_from_c1"
+      corridor2:
+        attr:
+          type: "square"
+          pose: [ [0.55,-15.2 ], [ 0 ] ]
+          length: 2.0
+          hysteresis: 0.05
+        connected_to:
+          corridor1: "goto_c1_from_c2"
+          corridor2: "stay"
+          room1: "goto_r1_from_c2"
+          room2: "goto_r2_from_c2"
+          room3: "goto_r3_from_c2"
+      corridor3:
+        attr:
+          type: "square"
+          pose: [[-0.0785,5.5], [0]]
+          length: 2.0
+          hysteresis: 0.05
+        connected_to:
+          corridor3: "stay"
+          corridor4: "goto_c4_from_c3"
+          reception: "goto_rec_from_c3"
+      corridor4:
+        attr:
+          type: "square"
+          pose: [[0.52,15.5], [0]]
+          length: 2.0
+          hysteresis: 0.05
+        connected_to:
+          corridor4: "stay"
+          corridor3: "goto_c3_from_c4"
+          room4: "goto_r4_from_c4"
+          room5: "goto_r5_from_c4"
+          room6: "goto_r6_from_c4"
+      room1:
+        attr:
+          type: "square"
+          pose: [[0.072,-17.0], [0]]
+          length: 1.0
+          hysteresis: 0.05
+        connected_to:
+          room1: "stay"
+          room2: "goto_r2_from_r1"
+          room3: "goto_r3_from_r1"
+          corridor2: "goto_c2_from_r1"
+      room2:
+        attr:
+          type: "square"
+          pose: [[1.296,-17.0], [0]]
+          length: 1.0
+          hysteresis: 0.05
+        connected_to:
+          room1: "goto_r1_from_r2"
+          room2: "stay"
+          room3: "goto_r3_from_r2"
+          corridor2: "goto_c2_from_r2"
+      room3:
+        attr:
+          type: "square"
+          pose: [[2.4376,-16.18], [0]]
+          length: 1.0
+          hysteresis: 0.05
+        connected_to:
+          room1: "goto_r1_from_r3"
+          room2: "goto_r2_from_r3"
+          room3: "stay"
+          corridor2: "goto_c2_from_r3"
+      room4:
+        attr:
+          type: "square"
+          pose: [[0.0687,17.3367], [0]]
+          length: 1.0
+          hysteresis: 0.05
+        connected_to:
+          room4: "stay"
+          room5: "goto_r5_from_r4"
+          room6: "goto_r6_from_r4"
+          corridor4: "goto_c4_from_r4"
+      room5:
+        attr:
+          type: "square"
+          pose: [[-1.22483714167,17.4108244215], [0]]
+          length: 1.0
+          hysteresis: 0.05
+        connected_to:
+          room4: "goto_r4_from_r5"
+          room5: "stay"
+          room6: "goto_r6_from_r5"
+          corridor4: "goto_c4_from_r5"
+      room6:
+        attr:
+          type: "square"
+          pose: [[-2.49092144041,16.7290914459], [0]]
+          length: 1.0
+          hysteresis: 0.05
+        connected_to:
+          room4: "goto_r4_from_r6"
+          room5: "goto_r5_from_r6"
+          room6: "stay"
+          corridor4: "goto_c4_from_r6"
+
+  turtlebot_load:
+    ts_type: "turtlebot_load"
+    initial: "standby"
+    nodes:
+      standby:
+        connected_to:
+          loaded: "pick"
+      loaded:
+        connected_to:
+          unloaded: "drop"
+      unloaded:
+        connected_to:
+          standby: "reset"
+
+actions:
+  goto_rec_from_c1:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: reception
+      pose: [[0.0,0.0,0], [0,0,0,1]]
+  goto_c1_from_rec:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor1
+      pose: [[ -0.370462,-5.11728,0], [0,0,-0.763773972,0.645483]]
+  goto_c1_from_c2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor1
+      pose: [[0.6364,-5.2104,0], [0,0,0.629531,0.7769]]
+  goto_c2_from_c1:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor2
+      pose: [[0.204543174556,-15.6400691615,0], [0,0,-0.691938781045,0.721956178231]]
+  goto_c2_from_r1:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor2
+      pose: [[0.893767700532,-15.621020187,0], [0,0,0.649803281385,0.760102424349]]
+  goto_c2_from_r2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor2
+      pose: [ [ 0.893767700532,-15.621020187,0 ], [ 0,0,0.649803281385,0.760102424349 ] ]
+  goto_c2_from_r3:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor2
+      pose: [ [ 0.893767700532,-15.621020187,0 ], [ 0,0,0.649803281385,0.760102424349 ] ]
+  goto_c3_from_rec:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor3
+      pose: [[0.439010717121,5.39949686517,0], [0,0,0.62715128811,0.778897465539 ]]
+  goto_c3_from_c4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor3
+      pose: [[-0.597075074163,5.6067420652,0], [0,0,-0.618954490472,0.785426851289]]
+  goto_c4_from_c3:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor4
+      pose: [[0.0801769987012,15.9729346195,0], [0,0,0.784740330953,0.619824663091]]
+  goto_c4_from_r4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor4
+      pose: [[-0.96669237647,16.0917214904,0], [0,0,-0.627166140764,0.778885506271]]
+  goto_c4_from_r5:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor4
+      pose: [[-0.96669237647,16.0917214904,0], [0,0,-0.627166140764,0.778885506271]]
+  goto_c4_from_r6:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: corridor4
+      pose: [[-0.96669237647,16.0917214904,0], [0,0,-0.627166140764,0.778885506271]]
+  goto_r4_from_c4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room4
+      pose: [[0.0686934824403,17.3366878815,0], [0,0,0.735819764476,0.67717743185]]
+  goto_r4_from_r5:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room4
+      pose: [[0.0686934824403,17.3366878815,0], [0,0,0.735819764476,0.67717743185]]
+  goto_r4_from_r6:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room4
+      pose: [[0.0686934824403,17.3366878815,0], [0,0,0.735819764476,0.67717743185]]
+  goto_r5_from_c4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room5
+      pose: [[-1.22483714167,17.4108244215,0], [0,0,0.746378261792,0.665521968325]]
+  goto_r5_from_r4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room5
+      pose: [[-1.22483714167,17.4108244215,0], [0,0,0.746378261792,0.665521968325]]
+  goto_r5_from_r6:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room5
+      pose: [[-1.22483714167,17.4108244215,0], [0,0,0.746378261792,0.665521968325]]
+  goto_r6_from_c4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room6
+      pose: [ [-2.49092144041, 16.7290914459 ,0 ], [ 0,0,-0.72365410615,0.690162831984 ] ]
+  goto_r6_from_r4:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room6
+      pose: [ [-2.49092144041, 16.7290914459 ,0 ], [ 0,0,-0.72365410615,0.690162831984 ] ]
+  goto_r6_from_r5:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room6
+      pose: [ [-2.49092144041, 16.7290914459 ,0 ], [ 0,0,-0.72365410615,0.690162831984 ] ]
+  goto_r1_from_c2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room1
+      pose: [ [ 0.0716932931179,-17.003931231,0 ], [ 0,0,-0.735287263752,0.677755589991 ] ]
+  goto_r1_from_r2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room1
+      pose: [ [ 0.0716932931179,-17.003931231,0 ], [ 0,0,-0.735287263752,0.677755589991 ] ]
+  goto_r1_from_r3:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room1
+      pose: [ [ 0.0716932931179,-17.003931231,0 ], [ 0,0,-0.735287263752,0.677755589991 ] ]
+  goto_r2_from_c2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room2
+      pose: [ [ 1.2962668991,-16.9915752681,0 ], [ 0,0,-0.745893160274,0.666065607471 ] ]
+  goto_r2_from_r1:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room2
+      pose: [ [ 1.2962668991,-16.9915752681,0 ], [ 0,0,-0.745893160274,0.666065607471 ] ]
+  goto_r2_from_r3:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room2
+      pose: [ [ 1.2962668991,-16.9915752681,0 ], [ 0,0,-0.745893160274,0.666065607471 ] ]
+  goto_r3_from_c2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room3
+      pose: [ [ 2.43761099017, -16.1832504812 ,0 ], [ 0,0,0.715742023943,0.69836477228 ] ]
+  goto_r3_from_r1:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room3
+      pose: [ [ 2.43761099017, -16.1832504812 ,0 ], [ 0,0,0.715742023943,0.69836477228 ] ]
+  goto_r3_from_r2:
+    type: "move"
+    weight: 10
+    guard: "1"
+    attr:
+      region: room3
+      pose: [ [ 2.43761099017, -16.1832504812 ,0 ], [ 0,0,0.715742023943,0.69836477228 ] ]
+
+  stay:
+    type: "stay"
+    guard: "1"
+    weight: 0.01
+  synchronized_transition:
+    type: "stay"
+    guard: "1"
+    weight: 0
+  pick:
+    type: "pick"
+    guard: "reception"
+    weight: 10
+  drop:
+    type: "drop"
+    guard: "1"
+    weight: 10
+  reset:
+    type: "reset"
+    guard: "1"
+    weight: 0
+
+
