@@ -13,7 +13,7 @@
   <rosparam command="load" file="$(find ltl_automaton_planner)/config/ltl_formula_turtlebot_test.yaml" />
 
   <!-- Transition system for mobile robot-->
-  <param name="transition_system_turtlebot_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_turtlebot_new.yaml" />
+  <param name="transition_system_turtlebot_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_turtlebot_08_new.yaml" />
 
   <!-- Run the gazebo world for turtlebot -->
   <include file="$(find ltl_automaton_bt)/launch/turtlebot_real_bt_decen.launch">
