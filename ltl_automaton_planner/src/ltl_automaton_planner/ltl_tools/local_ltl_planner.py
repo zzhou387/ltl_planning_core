@@ -15,9 +15,10 @@ from ltl_automaton_bt.srv import LTLTrace
 ###########################################################
 
 class LocalLTLPlanner(object):
-    def __init__(self, ts, hard_spec, soft_spec, beta=1000, gamma=10):
+    def __init__(self, ts, hard_spec, soft_spec, homing_spec, beta=1000, gamma=10):
         self.hard_spec = hard_spec
         self.soft_spec = soft_spec
+        self.homing_spec = homing_spec
         if ts is not None:
             self.ts = ts
         else:
@@ -26,6 +27,9 @@ class LocalLTLPlanner(object):
         self.buchi = None
         self.product = None
         self.local_plan = None
+        self.buchi_homing = None
+        self.product_homing = None
+        self.homing_plan = None
         self.trace = list() # record the TS states been visited
         self.traj = [] # record the full trajectory
         self.ts_info = None
@@ -40,6 +44,11 @@ class LocalLTLPlanner(object):
         self.product = ProdAut(self.ts, self.buchi)
         self.product.graph['ts'].build_full()
         self.product.build_full()
+
+        self.buchi_homing = mission_to_buchi(self.homing_spec, '')
+        self.product_homing = ProdAut(self.ts, self.buchi_homing)
+        self.product_homing.graph['ts'].build_full()
+        self.product_homing.build_full()
 
     def local_task_reallocate(self, style):
         rospy.loginfo("LTL Local Planner: --- Planning in progress ("+style+") ---")
@@ -76,6 +85,11 @@ class LocalLTLPlanner(object):
                     return False
             else:
                 raise InitError("LTL Local Planner: \"replanning_local_ts_change: \" planning was requested but product model or previous plan was never built, aborting...")
+
+        elif style == 'homing':
+            if self.product_homing:
+                self.product_homing.update_init(self.trace)
+                self.homing_plan, plantime = dijkstra_plan_networkX_finite(self.product_homing, self.gamma)
 
         else:
             raise InitError("LTL Local Planner: local reallocation style is wrong")

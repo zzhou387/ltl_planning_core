@@ -142,10 +142,14 @@ state_models:
       standby:
         connected_to:
           loaded: "pick"
+          guiding: "start_guiding"
       loaded:
         connected_to:
           unloaded: "drop"
       unloaded:
+        connected_to:
+          standby: "reset"
+      guiding:
         connected_to:
           standby: "reset"
 
@@ -390,6 +394,10 @@ actions:
   drop:
     type: "drop"
     guard: "1"
+    weight: 10
+  start_guiding:
+    type: "start_guiding"
+    guard: "reception"
     weight: 10
   reset:
     type: "reset"

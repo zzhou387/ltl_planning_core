@@ -87,6 +87,15 @@ class ProdAut(DiGraph):
             self[u][v]['weight'] = self[u][v]['transition_cost'] + beta*self[u][v]['soft_task_dist']
 
 
+    def update_init(self, trace):
+        # Reset initial set
+        self.graph['initial'] = set()
+        # Go through all initial states in Büchi
+        for buchi_init in self.graph['buchi'].graph['initial']:
+            # If both TS and Büchi state are initial state, build composed node and add it to the product initial set
+            init_prod_node = (trace[-1], buchi_init)
+            self.graph['initial'].add(init_prod_node)
+
 
     def composition(self, ts_node, buchi_node):
         # Compose node from TS and Büchi

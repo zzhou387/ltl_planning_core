@@ -68,6 +68,11 @@ class Local_Planner(object):
         # Get LTL soft task
         self.soft_task = rospy.get_param('soft_task', "")
 
+        if (rospy.has_param('homing_task')):
+            self.homing_task = rospy.get_param('homing_task')
+        else:
+            self.homing_task = "<>(reception && standby)"
+
 
         # Transition system
         #-------------------
@@ -75,6 +80,7 @@ class Local_Planner(object):
             transition_system = rospy.get_param('transition_system_mobile_1_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/dr_0/local_planner/action_plan'
+            self.homing_action_topic_name_ = '/dr_0/local_planner/homing_action_plan'
             self.trace_topic_name_ = '/dr_0/ltl_trace'
             self.replanning_topic_name_ = '/dr_0/replanning_request'
             self.global_replanning_topic_name_ = '/dr_0/global_replanning_request'
@@ -84,6 +90,7 @@ class Local_Planner(object):
             transition_system = rospy.get_param('transition_system_quadruped_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/a1_gazebo/local_planner/action_plan'
+            self.homing_action_topic_name_ = '/a1_gazebo/local_planner/homing_action_plan'
             self.trace_topic_name_ = '/a1_gazebo/ltl_trace'
             self.replanning_topic_name_ = '/a1_gazebo/replanning_request'
             self.global_replanning_topic_name_ = '/a1_gazebo/global_replanning_request'
@@ -93,6 +100,7 @@ class Local_Planner(object):
             transition_system = rospy.get_param('transition_system_mobile_2_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/wassi_0/local_planner/action_plan'
+            self.homing_action_topic_name_ = '/wassi_0/local_planner/homing_action_plan'
             self.trace_topic_name_ = '/wassi_0/ltl_trace'
             self.replanning_topic_name_ = '/wassi_0/replanning_request'
             self.global_replanning_topic_name_ = '/wassi_0/global_replanning_request'
@@ -102,6 +110,7 @@ class Local_Planner(object):
             transition_system = rospy.get_param('transition_system_turtlebot_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/turtlebot/local_planner/action_plan'
+            self.homing_action_topic_name_ = '/turtlebot/local_planner/homing_action_plan'
             self.trace_topic_name_ = '/turtlebot/ltl_trace'
             self.replanning_topic_name_ = '/turtlebot/replanning_request'
             self.global_replanning_topic_name_ = '/turtlebot/global_replanning_request'
@@ -111,6 +120,7 @@ class Local_Planner(object):
             transition_system = rospy.get_param('transition_system_mini_cheetah_textfile')
             self.transition_system_ = import_ts_from_file(transition_system)
             self.action_topic_name_ = '/mini_cheetah/local_planner/action_plan'
+            self.homing_action_topic_name_ = '/mini_cheetah/local_planner/homing_action_plan'
             self.trace_topic_name_ = '/mini_cheetah/ltl_trace'
             self.replanning_topic_name_ = '/mini_cheetah/replanning_request'
             self.global_replanning_topic_name_ = '/mini_cheetah/global_replanning_request'
@@ -133,7 +143,7 @@ class Local_Planner(object):
         # Here we take the product of each element of state_models to define the full TS
         self.robot_model_ = TSModel(state_models_)
 
-        self.ltl_planner_local = LocalLTLPlanner(self.robot_model_, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
+        self.ltl_planner_local = LocalLTLPlanner(self.robot_model_, self.hard_task, self.soft_task, self.homing_task, self.initial_beta, self.gamma)
 
         self.ltl_planner_local.local_task_reallocate(style="static")
 
@@ -154,6 +164,9 @@ class Local_Planner(object):
     def setup_pub_sub(self):
         # local plan publisher
         self.plan_pub_ = rospy.Publisher(self.action_topic_name_, LTLPlan, latch=True, queue_size=1)
+
+        # local plan publisher
+        self.homing_plan_pub_ = rospy.Publisher(self.homing_action_topic_name_, LTLPlan, latch=True, queue_size=1)
 
         # Global replanning request publisher (contains: 1) replanning status, 2) TS info, 3) latest local plan)
         self.global_replan_pub_ = rospy.Publisher(self.global_replanning_topic_name_, GlobalReplanInfo, latch=True, queue_size=1)
@@ -297,6 +310,19 @@ class Local_Planner(object):
             self.ltl_planner_local.trace = list()
             self.ltl_planner_local.update_info = {}
 
+        if(replan_status == 4):
+            rospy.logwarn('LTL Local Planner: received homing signal')
+            while len(self.ltl_planner_local.trace) == 0:
+                rospy.logwarn('Waiting for the trace callbacks from current agent')
+
+            if self.ltl_planner_local.local_task_reallocate(style="homing"):
+                self.publish_homing()
+
+            else:
+                rospy.logwarn("LTL Local Planner: homing path not found!")
+
+            self.ltl_planner_local.trace = list()
+
 
     def publish_local(self):
         # If plan exists
@@ -323,6 +349,35 @@ class Local_Planner(object):
 
             # Publish
             self.plan_pub_.publish(plan_local_msg)
+
+        return True
+
+
+    def publish_homing(self):
+        # If plan exists
+        if self.ltl_planner_local.homing_plan is not None:
+            # Prefix plan
+            #-------------
+            plan_local_msg = LTLPlan()
+            plan_local_msg.header.stamp = rospy.Time.now()
+            plan_local_status = False
+
+            plan_local_msg.action_sequence = self.ltl_planner_local.homing_plan.action_sequence
+
+            for ts_state in self.ltl_planner_local.homing_plan.ts_state_sequence:
+                ts_state_msg = TransitionSystemState()
+                ts_state_msg.state_dimension_names = [item for sublist in self.ltl_planner_local.product.graph['ts'].graph['ts_state_format'] for item in sublist]
+                # If TS state is more than 1 dimension (is a tuple)
+                if type(ts_state) is tuple:
+                    ts_state_msg.states = list(ts_state)
+                # Else state is a single string
+                else:
+                    ts_state_msg.states = [ts_state]
+                # Add to plan TS state sequence
+                plan_local_msg.ts_state_sequence.append(ts_state_msg)
+
+            # Publish
+            self.homing_plan_pub_.publish(plan_local_msg)
 
         return True
 
