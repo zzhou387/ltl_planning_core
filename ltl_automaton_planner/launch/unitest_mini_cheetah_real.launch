@@ -16,9 +16,10 @@
   <param name="transition_system_mini_cheetah_textfile" type="str" textfile="$(find ltl_automaton_planner)/config/ts_mini_cheetah_new.yaml" />
 
   <!-- Run the gazebo world for mini-cheetah -->
-  <include file="$(find ltl_automaton_bt)/launch/mini_cheetah_real_bt_decen.launch">
+  <include file="$(find ltl_automaton_bt)/launch/mini_cheetah_real_bt_decen_unitest.launch">
     <arg name="agent_name" value="$(arg agent_name)" />
     <arg name="plan_name" value="/$(arg agent_name)/local_planner/action_plan" />
+    <arg name="homing_name" default="$(arg agent_name)/local_planner/homing_action_plan"/>
     <arg name="pose_x" default="0.0178523" />
     <arg name="pose_y" default="1.2468818" />
     <arg name="init_yaw" default="0.0" />
