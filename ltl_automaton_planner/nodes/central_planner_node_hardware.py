@@ -522,7 +522,7 @@ class Central_Planner(object):
                 # -------------------------
                 # Check if state is in TS
                 # -------------------------
-                if (state in self.robot_model_quadruped.nodes()):
+                if (state in self.robot_model_mobile_2.nodes()):
 
                     # Update trace for robot 2
                     self.ltl_planner_multi_robot.trace_dic[1].append(state)
@@ -552,7 +552,7 @@ class Central_Planner(object):
                 # -------------------------
                 # Check if state is in TS
                 # -------------------------
-                if (state in self.robot_model_mobile_2.nodes()):
+                if (state in self.robot_model_quadruped.nodes()):
 
                     # Update trace for robot 2
                     self.ltl_planner_multi_robot.trace_dic[2].append(state)
