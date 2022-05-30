@@ -13,7 +13,7 @@ import std_msgs
 
 from ltl_automaton_planner.ltl_tools.ts import TSModel
 from ltl_automaton_planner.ltl_tools.team import TeamModel
-from ltl_automaton_planner.ltl_tools.ltl_planner_multi_robot_exp import LTLPlanner_MultiRobot_Exp
+from ltl_automaton_planner.ltl_tools.ltl_planner_multi_robot_scalability import LTLPlanner_MultiRobot_Scala
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -62,8 +62,11 @@ class MultiRobot_Planner_Exp(object):
     def init_params(self):
         #Get parameters from parameter server
         self.agent_name_mobile_1 = rospy.get_param('agent_name_mobile_1', "agent_1")
+        self.num_mobile_1 = rospy.get_param('num_mobile_1')
         self.agent_name_mobile_2 = rospy.get_param('agent_name_mobile_2', "agent_2")
+        self.num_mobile_2 = rospy.get_param('num_mobile_2')
         self.agent_name_dog_1 = rospy.get_param('agent_name_dog_1', "dog_1")
+        self.num_quadruped = rospy.get_param('num_quadruped')
         self.initial_beta = rospy.get_param('initial_beta', 1000)
         self.gamma = rospy.get_param('gamma', 10)
 
@@ -142,9 +145,13 @@ class MultiRobot_Planner_Exp(object):
         self.robot_model_mobile_1 = TSModel(state_models_mobile_1)
         self.robot_model_mobile_2 = TSModel(state_models_mobile_2)
         self.robot_model_quadruped = TSModel(state_models_quadruped)
-        self.ts_list = [self.robot_model_mobile_1, self.robot_model_quadruped, self.robot_model_mobile_2]
+        self.ts_list_mobile_1 = [self.robot_model_mobile_1 for i in range(self.num_mobile_1)]
+        self.ts_list_quadruped = [self.robot_model_quadruped for i in range(self.num_quadruped)]
+        self.ts_list_mobile_2 = [self.robot_model_mobile_2 for i in range(self.num_mobile_2)]
+        self.ts_list = self.ts_list_mobile_1 + self.ts_list_quadruped + self.ts_list_mobile_2
+        # self.ts_list = [self.robot_model_mobile_1, self.robot_model_quadruped, self.robot_model_mobile_2]
 
-        self.ltl_planner_multi_robot = LTLPlanner_MultiRobot_Exp(self.ts_list, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
+        self.ltl_planner_multi_robot = LTLPlanner_MultiRobot_Scala(self.ts_list, self.hard_task, self.soft_task, self.initial_beta, self.gamma)
         rospy.logwarn('Product automaton construction took %.2fs' %(time.time()-start))
 
         start = time.time()
@@ -213,9 +220,7 @@ class MultiRobot_Planner_Exp(object):
                 self.publish_plan_initial()
                 rospy.logwarn('Replanning level 1 done within %.2fs' %(time.time()-start))
                 self.ltl_planner_multi_robot.trace_dic = {}
-                self.ltl_planner_multi_robot.trace_dic[0] = list()
-                self.ltl_planner_multi_robot.trace_dic[1] = list()
-                self.ltl_planner_multi_robot.trace_dic[2] = list()
+                self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
@@ -243,9 +248,7 @@ class MultiRobot_Planner_Exp(object):
                     self.publish_plan_initial()
                     rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+                    self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
@@ -273,9 +276,7 @@ class MultiRobot_Planner_Exp(object):
                     self.publish_plan_initial()
                     rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+                    self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
@@ -313,9 +314,7 @@ class MultiRobot_Planner_Exp(object):
                 self.publish_plan_initial()
                 rospy.logwarn('Replanning level 1 done within %.2fs' %(time.time()-start))
                 self.ltl_planner_multi_robot.trace_dic = {}
-                self.ltl_planner_multi_robot.trace_dic[0] = list()
-                self.ltl_planner_multi_robot.trace_dic[1] = list()
-                self.ltl_planner_multi_robot.trace_dic[2] = list()
+                self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
@@ -343,9 +342,7 @@ class MultiRobot_Planner_Exp(object):
                     self.publish_plan_initial()
                     self.ltl_planner_multi_robot.trace_dic = {}
                     rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+                    self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
@@ -373,9 +370,7 @@ class MultiRobot_Planner_Exp(object):
                     self.publish_plan_initial()
                     rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+                    self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
@@ -412,9 +407,7 @@ class MultiRobot_Planner_Exp(object):
                 self.publish_plan_initial()
                 rospy.logwarn('Replanning level 1 done within %.2fs' %(time.time()-start))
                 self.ltl_planner_multi_robot.trace_dic = {}
-                self.ltl_planner_multi_robot.trace_dic[0] = list()
-                self.ltl_planner_multi_robot.trace_dic[1] = list()
-                self.ltl_planner_multi_robot.trace_dic[2] = list()
+                self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
                 self.ltl_planner_multi_robot.local_replan_rname = None
                 self.ltl_planner_multi_robot.update_info = {}
 
@@ -442,9 +435,7 @@ class MultiRobot_Planner_Exp(object):
                     self.publish_plan_initial()
                     rospy.logwarn('Replanning level 2 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+                    self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
@@ -472,9 +463,7 @@ class MultiRobot_Planner_Exp(object):
                     self.publish_plan_initial()
                     rospy.logwarn('Replanning level 3 global done within %.2fs' %(time.time()-start))
                     self.ltl_planner_multi_robot.trace_dic = {}
-                    self.ltl_planner_multi_robot.trace_dic[0] = list()
-                    self.ltl_planner_multi_robot.trace_dic[1] = list()
-                    self.ltl_planner_multi_robot.trace_dic[2] = list()
+                    self.ltl_planner_multi_robot.trace_dic = [list() for i in range(self.num_mobile_1+self.num_quadruped+self.num_mobile_2)]
 
                 self.ltl_planner_multi_robot.local_replan_rname = None
 
@@ -484,26 +473,27 @@ class MultiRobot_Planner_Exp(object):
         if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_1.to_sec())):
             # Update previously received timestamp
             self.prev_received_timestamp_1 = deepcopy(msg.header.stamp)
-            self.ltl_planner_multi_robot.trace_dic[0] = list()
             # self.ltl_planner_multi_robot.local_replan_rname = 0
 
-            for state_msg in msg.ts_state_sequence:
-                state = handle_ts_state_msg(state_msg)
+            for robot_id in range(self.num_mobile_1):
+                self.ltl_planner_multi_robot.trace_dic[robot_id] = list()
+                for state_msg in msg.ts_state_sequence:
+                    state = handle_ts_state_msg(state_msg)
 
-                #-------------------------
-                # Check if state is in TS
-                #-------------------------
-                if (state in self.robot_model_mobile_1.nodes()):
+                    #-------------------------
+                    # Check if state is in TS
+                    #-------------------------
+                    if (state in self.robot_model_mobile_1.nodes()):
 
-                    # Update trace for robot 1
-                    self.ltl_planner_multi_robot.trace_dic[0].append(state)
+                        # Update trace for robot 1
+                        self.ltl_planner_multi_robot.trace_dic[robot_id].append(state)
 
-                #--------------------------------------------
-                # If state not part of the transition system
-                #--------------------------------------------
-                else:
-                    #ERROR: unknown state (not part of TS)
-                    rospy.logwarn('State is not in TS plan!')
+                    #--------------------------------------------
+                    # If state not part of the transition system
+                    #--------------------------------------------
+                    else:
+                        #ERROR: unknown state (not part of TS)
+                        rospy.logwarn('State is not in TS plan!')
         else:
             rospy.logwarn("LTL planner: not updating with received trace, timestamp identical to previously received message timestamp at time %f" %self.prev_received_timestamp_1.to_sec())
 
@@ -515,26 +505,27 @@ class MultiRobot_Planner_Exp(object):
         if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_2.to_sec())):
             # Update previously received timestamp
             self.prev_received_timestamp_2 = deepcopy(msg.header.stamp)
-            self.ltl_planner_multi_robot.trace_dic[1] = list()
             # self.ltl_planner_multi_robot.local_replan_rname = 1
 
-            for state_msg in msg.ts_state_sequence:
-                state = handle_ts_state_msg(state_msg)
+            for robot_id in range(self.num_quadruped):
+                self.ltl_planner_multi_robot.trace_dic[self.num_mobile_1+robot_id] = list()
+                for state_msg in msg.ts_state_sequence:
+                    state = handle_ts_state_msg(state_msg)
 
-                #-------------------------
-                # Check if state is in TS
-                #-------------------------
-                if (state in self.robot_model_quadruped.nodes()):
+                    #-------------------------
+                    # Check if state is in TS
+                    #-------------------------
+                    if (state in self.robot_model_quadruped.nodes()):
 
-                    # Update trace for robot 2
-                    self.ltl_planner_multi_robot.trace_dic[1].append(state)
+                        # Update trace for robot 2
+                        self.ltl_planner_multi_robot.trace_dic[self.num_mobile_1+robot_id].append(state)
 
-                #--------------------------------------------
-                # If state not part of the transition system
-                #--------------------------------------------
-                else:
-                    #ERROR: unknown state (not part of TS)
-                    rospy.logwarn('State is not in TS plan!')
+                    #--------------------------------------------
+                    # If state not part of the transition system
+                    #--------------------------------------------
+                    else:
+                        #ERROR: unknown state (not part of TS)
+                        rospy.logwarn('State is not in TS plan!')
         else:
             rospy.logwarn("LTL planner: not updating with received trace, timestamp identical to previously received message timestamp at time %f" %self.prev_received_timestamp_2.to_sec())
 
@@ -544,26 +535,27 @@ class MultiRobot_Planner_Exp(object):
         if not (self.check_timestamp and (msg.header.stamp.to_sec() == self.prev_received_timestamp_3.to_sec())):
             # Update previously received timestamp
             self.prev_received_timestamp_3 = deepcopy(msg.header.stamp)
-            self.ltl_planner_multi_robot.trace_dic[2] = list()
             # self.ltl_planner_multi_robot.local_replan_rname = 2
 
-            for state_msg in msg.ts_state_sequence:
-                state = handle_ts_state_msg(state_msg)
+            for robot_id in range(self.num_mobile_2):
+                self.ltl_planner_multi_robot.trace_dic[self.num_mobile_1+self.num_quadruped+robot_id] = list()
+                for state_msg in msg.ts_state_sequence:
+                    state = handle_ts_state_msg(state_msg)
 
-                #-------------------------
-                # Check if state is in TS
-                #-------------------------
-                if (state in self.robot_model_mobile_2.nodes()):
+                    #-------------------------
+                    # Check if state is in TS
+                    #-------------------------
+                    if (state in self.robot_model_mobile_2.nodes()):
 
-                    # Update trace for robot 2
-                    self.ltl_planner_multi_robot.trace_dic[2].append(state)
+                        # Update trace for robot 2
+                        self.ltl_planner_multi_robot.trace_dic[self.num_mobile_1+self.num_quadruped+robot_id].append(state)
 
-                #--------------------------------------------
-                # If state not part of the transition system
-                #--------------------------------------------
-                else:
-                    #ERROR: unknown state (not part of TS)
-                    rospy.logwarn('State is not in TS plan!')
+                    #--------------------------------------------
+                    # If state not part of the transition system
+                    #--------------------------------------------
+                    else:
+                        #ERROR: unknown state (not part of TS)
+                        rospy.logwarn('State is not in TS plan!')
         else:
             rospy.logwarn("LTL planner: not updating with received trace, timestamp identical to previously received message timestamp at time %f" %self.prev_received_timestamp_3.to_sec())
 
